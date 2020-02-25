@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-.. module:: zlel_main.py
+.. module:: zlel_p1.py
     :synopsis:
+        This module parses circuit info, and separates it into different data arrays.
+        It also calculates incidence matrix for the given input circuit.
 
-.. moduleauthor:: YOUR NAME AND E-MAIL
+.. moduleauthor:: Mikel Elorza (mikelelorza0327@gmail.com), Egoitz Gonzalez (egoitz.gonz@gmail.com)
 
 
 """
@@ -76,7 +78,7 @@ def element_branches(element, nodes):
     return br, nd
 
 
-def span_branches(cir_el, cir_nd):
+def span_branches(cir_el, cir_nd, cir_val):
     """
     Takes parsed cir matrices and expands the list elements to get a list of all the branches.
 
@@ -85,10 +87,12 @@ def span_branches(cir_el, cir_nd):
     Args:
         cir_el: parsed cir_el
         cir_nd: parsed cir_nd, size(b,4)
+        cir_val: parsed cir_val, size(b,3)
 
     Returns:
         branches: reshaped cir_el
         branch_nd: reshaped cir_nd, now it is a (b,2) matrix
+        branch_val: reshaped ir_Val, contains values repeated in branches corresponding to same element, size(b,3)
 
     Raises:
         SystemExit
@@ -96,26 +100,30 @@ def span_branches(cir_el, cir_nd):
     """
     branches = np.empty((1, 0), dtype=str)
     branch_nd = np.empty((0, 2), dtype=int)
+    branch_val = np.empty((0, 3), dtype=float)
 
     for i in range(len(cir_el)):
         span_elem = element_branches(cir_el[i], cir_nd[i])
         branches = np.append(branches, span_elem[0])
         branch_nd = np.append(branch_nd, span_elem[1], axis=0)
+        branch_val = np.append(branch_val, cir_val[i:i+1, :], axis=0)
 
     if len(np.flatnonzero(branch_nd == 0)) == 0:
         sys.exit("Reference node \"0\" is not defined in the circuit.")
     elif len(np.flatnonzero(branch_nd == 0)) == 1:
         sys.exit("Node 0 is floating.")
 
-    return branches, branch_nd
+    return branches, branch_nd, branch_val
 
 
-def check_parallel_v(cir_el, cir_val, branches, incidence_matrix):
+def check_parallel_v(branches, branches_val, incidence_matrix):
     """
     This methods checks whether any two different voltage sources are connected in parallel.
 
     Args:
-        branches: reshaped cir_el, ordered list of branch names
+        nd: list of ordered nodes
+        branches: reshaped cir_el, list of branch names
+        branches_val: reshaped cir_val, list of values of each branch's element, size(b,3) np array
         incidence_matrix: calculated incidence matrix
 
     Raises:
@@ -124,42 +132,40 @@ def check_parallel_v(cir_el, cir_val, branches, incidence_matrix):
     """
 
     v_sources = np.array([i for i in range(len(incidence_matrix[0, :])) if branches[i][0].lower() == "v"], dtype=int)
-    for i in v_sources:
-        value1 = cir_val[np.flatnonzero(cir_el == branches[i])[0]]
-        for j in v_sources[v_sources > i]:
-            value2 = cir_val[np.flatnonzero(cir_el == branches[j])[0]]
-            if np.all(incidence_matrix[:, i] == incidence_matrix[:, j]) and value1 != value2:
-                sys.exit("Parallel V sources at branches " + str(i) + " and " + str(j) + ".")
-            elif np.all(incidence_matrix[:, i] == - incidence_matrix[:, j]) and value1 != - value2:
-                sys.exit("Parallel V sources at branches " + str(i) + " and " + str(j) + ".")
+    for v in v_sources:
+        value1 = branches_val[v, 0]
+        for u in v_sources[v_sources > v]:
+            value2 = branches_val[u, 0]
+            if np.all(incidence_matrix[:, v] == incidence_matrix[:, u]) and value1 != value2:
+                sys.exit("Parallel V sources at branches " + str(v) + " and " + str(u) + ".")
+            elif np.all(incidence_matrix[:, v] == - incidence_matrix[:, u]) and value1 != - value2:
+                sys.exit("Parallel V sources at branches " + str(v) + " and " + str(u) + ".")
 
 
-def check_serial_i(cir_el, cir_val, branches, incidence_matrix):
+def check_serial_i(nd, branches, branches_val, incidence_matrix):
     """
     This methods checks whether any two different current sources are connected in series.
 
     Args:
+        nd: list of ordered nodes
         branches: reshaped cir_el, list of branch names
+        branches_val: reshaped cir_val, list of values of each branch's element, size(b,3) np array
         incidence_matrix: calculated incidence matrix
 
     Raises:
         SystemExit
 
     """
+
     i_sources = np.array([i for i in range(len(incidence_matrix[0, :])) if branches[i][0].lower() == "i"], dtype=int)
     for n in range(len(incidence_matrix[:, 0])):
         non_zero = np.flatnonzero(incidence_matrix[n, :] != 0)
-        if len(non_zero) == 2 and (non_zero in i_sources):
-            i, j = non_zero
-            value1 = cir_val[np.flatnonzero(cir_el == branches[i])[0]]
-            value2 = cir_val[np.flatnonzero(cir_el == branches[j])[0]]
-
-            if incidence_matrix[n, i] == - incidence_matrix[n, j] and value1 != value2:
-                sys.exit("I sources in series at node " + str(i) + ".")
-            elif incidence_matrix[n, i] == incidence_matrix[n, j] and value1 != - value2:
-                sys.exit("I sources in series at node " + str(i) + ".")
-
-            sys.exit("I sources in series at node " + str(i) + ".")
+        if all(j in i_sources for j in non_zero):
+            i_sum = 0
+            for elem in non_zero:
+                i_sum += branches_val[elem, 0] * incidence_matrix[n][elem]
+            if i_sum != 0:
+                sys.exit("I sources in series at node " + str(nd[n]) + ".")
 
 
 def node_set(cir_nd):
@@ -248,10 +254,6 @@ def print_cir_info(cir_el, cir_nd, b, n, nodes, el_num):
     print("v" + str(b))
 
 
-#    YOU ARE ENCOURAGED TO MODIFY THE ARGS OF THIS FUNCTION TO FIT INTO YOUR
-#    CODE.
-
-
 def print_incidence_matrix(mat):
     """
     Prints the incidence matrix provided.
@@ -273,22 +275,20 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         filename = sys.argv[1]
     else:
-        filename = "../cirs/all/0_zlel_parallel_V_V.cir"
+        filename = "../cirs/all/0_zlel_node_float.cir"
 
     # Parse the circuit
-    [cir_el, cir_nd, cir_val, cir_ctr] = cir_parser(filename)
+    cir_el, cir_nd, cir_val, cir_ctr = cir_parser(filename)
     el_num = len(cir_el)
 
     # Identify branches and nodes
-    [br, br_nd] = span_branches(cir_el, cir_nd)
+    br, br_nd, br_val = span_branches(cir_el, cir_nd, cir_val)
     nd = node_set(cir_nd)
-
-    print(br_nd)
 
     mat = build_incidence_matrix(br, br_nd, nd)
 
-    # check_parallel_v(br, mat)
-    # check_serial_i(br, mat)
+    check_parallel_v(br, br_val, mat)
+    check_serial_i(nd, br, br_val, mat)
 
     # Print info
     print_cir_info(br, br_nd, len(br), len(nd), nd, el_num)
