@@ -78,7 +78,7 @@ def element_branches(element, nodes):
     return br, nd
 
 
-def span_branches(cir_el, cir_nd, cir_val):
+def span_branches(cir_el, cir_nd, cir_val, cir_ctr):
     """
     Takes parsed cir matrices and expands the list elements to get a list of all the branches.
 
@@ -88,11 +88,13 @@ def span_branches(cir_el, cir_nd, cir_val):
         cir_el: parsed cir_el
         cir_nd: parsed cir_nd, size(b,4)
         cir_val: parsed cir_val, size(b,3)
+        cir_ctr: parsed cir_ctr, size(b,1)
 
     Returns:
         branches: reshaped cir_el
         branch_nd: reshaped cir_nd, now it is a (b,2) matrix
-        branch_val: reshaped ir_Val, contains values repeated in branches corresponding to same element, size(b,3)
+        branch_val: reshaped cir_val, contains values repeated in branches corresponding to same element, size(b,3)
+        branch_ctr: reshaped cir_ctr, contains controls repeated in branches corresponding to same element, size(b,1)
 
     Raises:
         SystemExit
@@ -101,19 +103,21 @@ def span_branches(cir_el, cir_nd, cir_val):
     branches = np.empty((1, 0), dtype=str)
     branch_nd = np.empty((0, 2), dtype=int)
     branch_val = np.empty((0, 3), dtype=float)
+    branch_ctr = np.empty((0, 1), dtype=str)
 
     for i in range(len(cir_el)):
         span_elem = element_branches(cir_el[i], cir_nd[i])
         branches = np.append(branches, span_elem[0])
         branch_nd = np.append(branch_nd, span_elem[1], axis=0)
         branch_val = np.append(branch_val, cir_val[i:i+1, :], axis=0)
+        branch_ctr = np.append(branch_ctr, cir_ctr[i])
 
     if len(np.flatnonzero(branch_nd == 0)) == 0:
         sys.exit("Reference node \"0\" is not defined in the circuit.")
     elif len(np.flatnonzero(branch_nd == 0)) == 1:
         sys.exit("Node 0 is floating.")
 
-    return branches, branch_nd, branch_val
+    return branches, branch_nd, branch_val, branch_ctr
 
 
 def check_parallel_v(branches, branches_val, incidence_matrix):

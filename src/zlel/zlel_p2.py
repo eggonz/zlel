@@ -121,26 +121,6 @@ def plot_from_cvs(filename, x, y, title):
     plt.show()
 
 
-def count_commands(cir_el):
-    """
-        This function counts how many commands does the given file have,
-        supposing commands begin with '.'.
-        
-        Args:
-            cir_el: np.array list of parsed elements, the first column of
-            the file
-            
-        Returns:
-            n: # of lines with command data
-                
-    """
-    n = 0
-    for elem in cir_el:
-        if elem.startswith("."):
-            n += 1
-    return n
-
-
 def command_pr():
     """
         Function called with command .PR.
@@ -203,6 +183,147 @@ def command_tr(values):
     """
 
 
+def process_circuit(filename):
+    """
+        This function parses and processes circuit info.
+        It must be called before doing anything else, as it defines all variables.
+
+    Args:
+        filename: string with file relative path
+
+    Returns:
+        info: dictionary containing all circuit info, contains following keys:
+            com_el: list of command names
+            com_val: list of values for each command
+            com_ctr: list of control elements for each command
+            br: list of branch names
+            br_nd: list of nodes for each branch
+            br_val: list of values for the element in each branch
+            br_ctr: list of control element for the element in each branch
+            nd: list of node names
+            incidence_mat: incidence matrix (nd x br)
+    """
+
+    # Parse the circuit
+    cir_el, cir_nd, cir_val, cir_ctr = zl1.cir_parser(filename)
+
+    # Differentiate commands from elements in file
+    n = sum(1 for elem in cir_el if elem.startswith("."))
+
+    com_el, com_val, com_ctr = \
+        cir_el[-n:], cir_val[-n:], cir_ctr[-n:]
+
+    cir_el, cir_nd, cir_val, cir_ctr = \
+        cir_el[:-n], cir_nd[:-n], cir_val[:-n], cir_ctr[:-n]
+
+    # Identify branches and nodes
+    br, br_nd, br_val, br_ctr = zl1.span_branches(cir_el, cir_nd, cir_val, cir_ctr)
+    nd = zl1.node_set(cir_nd)
+
+    incidence_mat = zl1.build_incidence_matrix(br, br_nd, nd)
+
+    zl1.check_parallel_v(br, br_val, incidence_mat)
+    zl1.check_serial_i(nd, br, br_val, incidence_mat)
+
+    return {
+        "com_el": com_el,
+        "com_val": com_val,
+        "com_ctr": com_ctr,
+        "br": br,
+        "br_nd": br_nd,
+        "br_val": br_val,
+        "br_ctr": br_ctr,
+        "nd": nd,
+        "incidence_mat": incidence_mat
+    }
+
+
+def get_element_matrices(info):
+    """
+        If element equations have " M v + N i = u " form, this function builds
+        and returns matrices M and N and vector u.
+
+    Args:
+        info: dictionary containing info of the current circuit
+
+    Returns:
+        M: voltage coefficient matrix
+        N: current coefficient matrix
+        u: independent terms vector
+    """
+
+    br, br_nd, br_val, br_ctr, nd =\
+        info["br"], info["br_nd"], info["br_val"], info["br_ctr"], info["nd"]
+
+    m = np.zeros(shape=(len(br), len(br)), dtype=float)
+    n = np.zeros(shape=(len(br), len(br)), dtype=float)
+    u = np.zeros(shape=len(br), dtype=float)
+
+    for ind in range(len(br)):
+        branch = br[ind].lower()
+
+        if branch.startswith("v"):
+            m[ind, ind] = 1
+            u[ind] = br_val[ind, 0]
+
+        elif branch.startswith("i"):
+            n[ind, ind] = 1
+            u[ind] = br_val[ind, 0]
+
+        elif branch.startswith("r"):
+            m[ind, ind] = 1
+            n[ind, ind] = -br_val[ind, 0]
+
+        elif branch.startswith("d"):
+            pass
+
+        elif branch.startswith("q"):
+            # write an equation with each branch
+            if branch.endswith("_be"):
+                pass
+            elif branch.endswith("_bc"):
+                pass
+
+        elif branch.startswith("a"):
+            # write an equation with each branch
+            if branch.endswith("_in"):
+                n[ind, ind] = 1
+            elif branch.endswith("_out"):
+                m[ind, ind] = 1
+
+        elif branch.startswith("e"):
+            m[ind, ind] = 1
+            ctr_ind = np.flatnonzero(br == br_ctr[ind])[0]  # index of the control branch in br
+            m[ind, ctr_ind] = -br_val[ind, 0]
+
+        elif branch.startswith("g"):
+            n[ind, ind] = 1
+            ctr_ind = np.flatnonzero(br == br_ctr[ind])[0]  # index of the control branch in br
+            m[ind, ctr_ind] = -br_val[ind, 0]
+
+        elif branch.startswith("h"):
+            m[ind, ind] = 1
+            ctr_ind = np.flatnonzero(br == br_ctr[ind])[0]  # index of the control branch in br
+            n[ind, ctr_ind] = -br_val[ind, 0]
+
+        elif branch.startswith("f"):
+            n[ind, ind] = 1
+            ctr_ind = np.flatnonzero(br == br_ctr[ind])[0]  # index of the control branch in br
+            n[ind, ctr_ind] = -br_val[ind, 0]
+
+        elif branch.startswith("b"):
+            m[ind, ind] = 1
+            v, f, p = br_val[ind, :]
+            u[ind] = v * np.sin(2*np.pi*t + 2*np.pi/360*p)
+
+        elif branch.startswith("y"):
+            m[ind, ind] = 1
+            i, f, p = br_val[ind, :]
+            u[ind] = i * np.sin(2*np.pi*t + 2*np.pi/360*p)
+
+    return m, n, u
+
+
 """    
 https://stackoverflow.com/questions/419163/what-does-if-name-main-do
 https://stackoverflow.com/questions/19747371/
@@ -213,36 +334,25 @@ if __name__ == "__main__":
         filename = sys.argv[1]
     else:
         filename = "../cirs/all/1_zlel_V_R_dc.cir"
-    
-    b = 2
+
+    '''b = 2
     n = 2
     filename = filename[:-3] + "tr"
     save_as_csv(b, n, filename)
-    plot_from_cvs(filename, "t", "e1", "")
+    plot_from_cvs(filename, "t", "e1", "")'''
 
-    '''
-    #COPY FROM P1:
+    info = process_circuit(filename)
 
-    # Parse the circuit
-    cir_el, cir_nd, cir_val, cir_ctr = cir_parser(filename)
-    el_num = len(cir_el)
-    
-    # Differentiate commands from elements in file
-    n = count_commands(cir_el)
-    
-    com_el, com_nd, com_val, com_ctr = \
-        cir_el[-n:], cir_nd[-n:], cir_val[-n:], cir_ctr[-n:]
-    
-    cir_el, cir_nd, cir_val, cir_ctr = \
-        cir_el[:-n], cir_nd[:-n], cir_val[:-n], cir_ctr[:-n]
+    for k in info:
+        print(k)
+        print(info[k])
 
-    # Identify branches and nodes
-    br, br_nd, br_val = zl1.span_branches(cir_el, cir_nd, cir_val)
-    nd = zl1.node_set(cir_nd)
+    m, n, u = get_element_matrices(info)
 
-    A = zl1.build_incidence_matrix(br, br_nd, nd)
-
-    zl1.check_parallel_v(br, br_val, A)
-    zl1.check_serial_i(nd, br, br_val, A)
-    
-    # define M, N and u'''
+    print()
+    print("m")
+    print(m)
+    print("n")
+    print(n)
+    print("u")
+    print(u)
