@@ -206,6 +206,8 @@ def process_circuit(filename):
 
     # Parse the circuit
     cir_el, cir_nd, cir_val, cir_ctr = zl1.cir_parser(filename)
+    cir_el = np.array(list(map(lambda x: x.lower(), cir_el)))
+    cir_ctr = np.array(list(map(lambda x: x.lower(), cir_ctr)))
 
     # Differentiate commands from elements in file
     n = sum(1 for elem in cir_el if elem.startswith("."))
@@ -238,13 +240,14 @@ def process_circuit(filename):
     }
 
 
-def get_element_matrices(info):
+def get_element_matrices(info, t):
     """
         If element equations have " M v + N i = u " form, this function builds
         and returns matrices M and N and vector u.
 
     Args:
         info: dictionary containing info of the current circuit
+        t: current time, for time dependent values/elements
 
     Returns:
         M: voltage coefficient matrix
@@ -275,51 +278,64 @@ def get_element_matrices(info):
             n[ind, ind] = -br_val[ind, 0]
 
         elif branch.startswith("d"):
-            pass
+            m[ind, ind] = br_val[ind, 0] / br_val[ind, 1] / 0.026
+            n[ind, ind] = -1
 
         elif branch.startswith("q"):
             # write an equation with each branch
+            ies, ics, bf = br_val[ind, :]
+            af = bf / (1 + bf)
+
             if branch.endswith("_be"):
-                pass
+                ind_bc = np.flatnonzero(br == branch[:-2]+"bc")[0]  # index of the control branch in br
+                m[ind, ind] = ies
+                m[ind, ind_bc] = - af * ies
+                n[ind, ind] = -0.026
+
             elif branch.endswith("_bc"):
-                pass
+                ind_be = np.flatnonzero(br == branch[:-2]+"be")[0]  # index of the control branch in br
+                m[ind, ind] = ics
+                m[ind, ind_be] = - af * ies
+                n[ind, ind] = -0.026
 
         elif branch.startswith("a"):
             # write an equation with each branch
+            ind_in = np.flatnonzero(br == branch[:-2] + "in")[0]  # index of the control branch in br
+
             if branch.endswith("_in"):
-                n[ind, ind] = 1
-            elif branch.endswith("_out"):
-                m[ind, ind] = 1
+                n[ind, ind_in] = 1
+            elif branch.endswith("_ou"):
+                m[ind, ind_in] = 1
 
         elif branch.startswith("e"):
             m[ind, ind] = 1
-            ctr_ind = np.flatnonzero(br == br_ctr[ind])[0]  # index of the control branch in br
-            m[ind, ctr_ind] = -br_val[ind, 0]
+            ind_ctr = np.flatnonzero(br == br_ctr[ind])[0]  # index of the control branch in br
+            m[ind, ind_ctr] = -br_val[ind, 0]
 
         elif branch.startswith("g"):
             n[ind, ind] = 1
-            ctr_ind = np.flatnonzero(br == br_ctr[ind])[0]  # index of the control branch in br
-            m[ind, ctr_ind] = -br_val[ind, 0]
+            ind_ctr = np.flatnonzero(br == br_ctr[ind])[0]  # index of the control branch in br
+            m[ind, ind_ctr] = -br_val[ind, 0]
 
         elif branch.startswith("h"):
             m[ind, ind] = 1
-            ctr_ind = np.flatnonzero(br == br_ctr[ind])[0]  # index of the control branch in br
-            n[ind, ctr_ind] = -br_val[ind, 0]
+            ind_ctr = np.flatnonzero(br == br_ctr[ind])[0]  # index of the control branch in br
+            n[ind, ind_ctr] = -br_val[ind, 0]
 
         elif branch.startswith("f"):
             n[ind, ind] = 1
-            ctr_ind = np.flatnonzero(br == br_ctr[ind])[0]  # index of the control branch in br
-            n[ind, ctr_ind] = -br_val[ind, 0]
+            ind_ctr = np.flatnonzero(br == br_ctr[ind])[0]  # index of the control branch in br
+            n[ind, ind_ctr] = -br_val[ind, 0]
 
         elif branch.startswith("b"):
             m[ind, ind] = 1
             v, f, p = br_val[ind, :]
-            u[ind] = v * np.sin(2*np.pi*t + 2*np.pi/360*p)
+            u[ind] = v * np.sin(2*np.pi*f*t + 2*np.pi/360*p)
 
         elif branch.startswith("y"):
             m[ind, ind] = 1
             i, f, p = br_val[ind, :]
-            u[ind] = i * np.sin(2*np.pi*t + 2*np.pi/360*p)
+            u[ind] = i * np.sin(2*np.pi*f*t + 2*np.pi/360*p)
 
     return m, n, u
 
@@ -347,7 +363,7 @@ if __name__ == "__main__":
         print(k)
         print(info[k])
 
-    m, n, u = get_element_matrices(info)
+    m, n, u = get_element_matrices(info, 1/4/0.05)
 
     print()
     print("m")

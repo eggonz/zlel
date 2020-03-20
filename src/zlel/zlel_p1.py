@@ -59,6 +59,7 @@ def element_branches(element, nodes):
     Returns:
         br: branches in which the element is separated
         nd: nodes which element is connected to
+        number_of_branches: # of branches of the element
 
     """
     elem_type = element[0].lower()
@@ -66,16 +67,19 @@ def element_branches(element, nodes):
     if elem_type == "q":
         br = np.array([element + "_be", element + "_bc"], dtype=str)
         nd = np.array([nodes[1:3], nodes[1::-1]], dtype=int)
+        number_of_branches = 2
 
     elif elem_type == "a":
         br = np.array([element + "_in", element + "_ou"], dtype=str)
         nd = np.array([nodes[0:2], nodes[2:4]], dtype=int)
+        number_of_branches = 2
 
     else:
         br = np.array([element], dtype=str)
         nd = np.array([nodes[0:2]], dtype=int)
+        number_of_branches = 1
 
-    return br, nd
+    return br, nd, number_of_branches
 
 
 def span_branches(cir_el, cir_nd, cir_val, cir_ctr):
@@ -109,8 +113,9 @@ def span_branches(cir_el, cir_nd, cir_val, cir_ctr):
         span_elem = element_branches(cir_el[i], cir_nd[i])
         branches = np.append(branches, span_elem[0])
         branch_nd = np.append(branch_nd, span_elem[1], axis=0)
-        branch_val = np.append(branch_val, cir_val[i:i+1, :], axis=0)
-        branch_ctr = np.append(branch_ctr, cir_ctr[i])
+        for _ in range(span_elem[2]):
+            branch_val = np.append(branch_val, cir_val[i:i+1, :], axis=0)
+            branch_ctr = np.append(branch_ctr, cir_ctr[i])
 
     if len(np.flatnonzero(branch_nd == 0)) == 0:
         sys.exit("Reference node \"0\" is not defined in the circuit.")
@@ -286,7 +291,7 @@ if __name__ == "__main__":
     el_num = len(cir_el)
 
     # Identify branches and nodes
-    br, br_nd, br_val = span_branches(cir_el, cir_nd, cir_val)
+    br, br_nd, br_val, br_ctr = span_branches(cir_el, cir_nd, cir_val, cir_ctr)
     nd = node_set(cir_nd)
 
     mat = build_incidence_matrix(br, br_nd, nd)
