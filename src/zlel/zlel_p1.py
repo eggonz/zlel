@@ -288,7 +288,6 @@ if __name__ == "__main__":
 
     # Parse the circuit
     cir_el, cir_nd, cir_val, cir_ctr = cir_parser(filename)
-    el_num = len(cir_el)
 
     # Identify branches and nodes
     br, br_nd, br_val, br_ctr = span_branches(cir_el, cir_nd, cir_val, cir_ctr)
@@ -300,5 +299,5 @@ if __name__ == "__main__":
     check_serial_i(nd, br, br_val, mat)
 
     # Print info
-    print_cir_info(br, br_nd, len(br), len(nd), nd, el_num)
+    print_cir_info(br, br_nd, len(br), len(nd), nd, len(cir_el))
     print_incidence_matrix(mat)

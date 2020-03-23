@@ -67,36 +67,6 @@ def build_csv_header(tvi, b, n):
     return header
 
 
-def save_as_csv(b, n, filename):
-    """ This function generates a csv file with the name filename.
-        First it will save a header and then, it loops and saves a line in 
-        csv format into the file.
-        
-    Args:
-        b: # of branches
-        n: # of nodes
-        filename: string with the filename (incluiding the path)
-    """
-    # Sup .tr
-    header = build_csv_header("t", b, n)
-    with open(filename, 'w') as file:
-        print(header, file=file)
-        # Get the indices of the elements corresponding to the sources.
-        # The freq parameter cannot be 0 this is why we choose cir_tr[0].
-        t = 0
-        while t < 10:
-            # for t in tr["start"],tr["end"],tr["step"]
-            # Recalculate the Us for the sinusoidal sources
-
-            sol = np.full(2*b+(n-1), t+1, dtype=float)
-            # Insert the time
-            sol = np.insert(sol, 0, t)
-            # sol to csv
-            sol_csv = ','.join(['%.5f' % num for num in sol])
-            print(sol_csv, file=file)
-            t = t + 1
-
-
 def plot_from_cvs(filename, x, y, title):
     """ This function plots the values corresponding to the x string of the 
         file filename in the x-axis and the ones corresponding to the y 
@@ -121,66 +91,137 @@ def plot_from_cvs(filename, x, y, title):
     plt.show()
 
 
-def command_pr():
+def command_pr(info):
     """
         Function called with command .PR.
         It prints the circuit info.
+
+    Args:
+        info: dict containing all circuit info
     """
-    zl1.print_cir_info(br, br_nd, len(br), len(nd), nd, el_num)
-    zl1.print_incidence_matrix(A)
+    elem_num, br, br_nd, nd = info["elem_num"], info["br"], info["br_nd"], info["nd"]
+    zl1.print_cir_info(br, br_nd, len(br), len(nd), nd, elem_num)
+    zl1.print_incidence_matrix(info["incidence_mat"])
 
 
-def command_op():
+def command_op(info):
     """
         Function called with command .OP.
         It solves the given circuit via Tableau equations.
+
+    Args:
+        info: dict containing all circuit info
     """
-    a0, a1 = np.size(A, 0), np.size(A, 1)
-    m0, m1 = np.size(M, 0), np.size(M, 1)
-    T = np.zeros([a0 + a1 + m0, a0 + m1 + a1], dtype=float)
-    U = np.zeros([a0 + a1 + m0, 1], dtype=float)
+    t = 0  # assumed
 
-    T[:a0, -a1:] = A
-    T[a0:-m0, :a0] = np.transpose(A)
-    T[a0:-m0, a0:-a1] = np.eye(m1)
-    T[-m0:, a0:-a1] = M
-    T[-m0:, -a1:] = N
-    U[-m0:, :] = u
-    
-    sol = np.linealg.solve(T, U)
-    print_solution(sol, b, n)
-    
+    sol = solve_circuit_in_time(info, t)
+    print_solution(sol, len(info["br"]), len(info["nd"]))
 
-def command_dc(values, control):
+
+def solve_circuit_in_time(info, t):
+    """
+        Solves circuit in given time.
+
+    Args:
+        info: dict containing all circuit info
+        t: time in seconds
+
+    Returns:
+        sol: np.array of size 2b+(n-1), solution for all circuit variables (e, v, i)
+    """
+    a = get_reduced_incidence_matrix(info)
+    m, n, u = get_element_matrices(info, t)
+
+    a0, a1 = np.size(a, 0), np.size(a, 1)
+    m0, m1 = np.size(m, 0), np.size(m, 1)
+    tableau_t = np.zeros([a0 + a1 + m0, a0 + m1 + a1], dtype=float)
+    tableau_u = np.zeros(a0 + a1 + m0, dtype=float)
+
+    tableau_t[:a0, -a1:] = a
+    tableau_t[a0:-m0, :a0] = -np.transpose(a)
+    tableau_t[a0:-m0, a0:-a1] = np.eye(m1)
+    tableau_t[-m0:, a0:-a1] = m
+    tableau_t[-m0:, -a1:] = n
+    tableau_u[-m0:] = u
+
+    return np.linalg.solve(tableau_t, tableau_u)
+
+
+def command_dc(info, values, control):
     """
         Function called with command .DC.
         Saves dc sweep data into csv file with same filename.
         
     Args:
+        info: dict containing all circuit info
         values: value info for command, np.array size(3)
         control: control element identifier, np.array size(1)
     """
     start, end, step = values
-    
-    header = build_csv_header("t", b, n)
-    with open(filename, 'w') as file:
+    t = 0  # assumed
+
+    file_name = filename[:-3] + "dc"
+    header = build_csv_header("t", len(info["br"]), len(info["nd"]))
+
+    with open(file_name, 'w') as file:
         print(header, file=file)
-        
-        t = start
-        while t < end:
-            # change u
+
+        v = start
+        while v < end:
+            change_value_of_elem(info, control, v)
+            sol = solve_circuit_in_time(info, t)
+
             # write in csv
-            t += step
+            sol = np.insert(sol, 0, t)
+            # sol to csv
+            sol_csv = ','.join(['%.5f' % num for num in sol])
+            print(sol_csv, file=file)
+
+            v += step
 
 
-def command_tr(values):
+def change_value_of_elem(info, elem_name, new_value):
+    """
+        Changes the value of the selected element.
+        Element must consist of a single branch and have a single value.
+
+    Args:
+         info: dict containing all circuit info
+         elem_name: element name
+         new_value: new value, which will override the previous
+    """
+    ind = np.flatnonzero(info["br"] == elem_name)[0]
+    info["br_val"][ind, 0] = new_value
+
+
+def command_tr(info, values):
     """
         Function called with command .TR.
         Saves transient analysis data into csv file.
         
     Args:
+        info: dict containing all circuit info
         values: value info for command, np.array size(3)
     """
+    start, end, step = values
+
+    file_name = filename[:-3] + "tr"
+    header = build_csv_header("t", len(info["br"]), len(info["nd"]))
+
+    with open(file_name, 'w') as file:
+        print(header, file=file)
+
+        t = start
+        while t < end:
+            sol = solve_circuit_in_time(info, t)
+
+            # write in csv
+            sol = np.insert(sol, 0, t)
+            # sol to csv
+            sol_csv = ','.join(['%.5f' % num for num in sol])
+            print(sol_csv, file=file)
+
+            t += step
 
 
 def process_circuit(filename):
@@ -193,6 +234,7 @@ def process_circuit(filename):
 
     Returns:
         info: dictionary containing all circuit info, contains following keys:
+            elem_num: # of elements in circuit
             com_el: list of command names
             com_val: list of values for each command
             com_ctr: list of control elements for each command
@@ -228,6 +270,7 @@ def process_circuit(filename):
     zl1.check_serial_i(nd, br, br_val, incidence_mat)
 
     return {
+        "elem_num": len(cir_el),
         "com_el": com_el,
         "com_val": com_val,
         "com_ctr": com_ctr,
@@ -340,6 +383,16 @@ def get_element_matrices(info, t):
     return m, n, u
 
 
+def get_reduced_incidence_matrix(info):
+    nd, mat = info["nd"], info["incidence_mat"]
+    a = np.flatnonzero(nd == 0)
+    if len(a) == 0:
+        return mat[1:, :]
+    else:
+        ind = a[0]
+        return np.delete(mat, ind, 0)
+
+
 """    
 https://stackoverflow.com/questions/419163/what-does-if-name-main-do
 https://stackoverflow.com/questions/19747371/
@@ -351,19 +404,13 @@ if __name__ == "__main__":
     else:
         filename = "../cirs/all/1_zlel_V_R_dc.cir"
 
-    '''b = 2
-    n = 2
-    filename = filename[:-3] + "tr"
-    save_as_csv(b, n, filename)
-    plot_from_cvs(filename, "t", "e1", "")'''
+    cir_info = process_circuit(filename)
 
-    info = process_circuit(filename)
-
-    for k in info:
+    '''for k in cir_info:
         print(k)
-        print(info[k])
+        print(cir_info[k])
 
-    m, n, u = get_element_matrices(info, 1/4/0.05)
+    m, n, u = get_element_matrices(cir_info, 1/4/0.05)
 
     print()
     print("m")
@@ -372,3 +419,6 @@ if __name__ == "__main__":
     print(n)
     print("u")
     print(u)
+    print()'''
+
+    command_tr(cir_info, (1, 20, 0.1))
