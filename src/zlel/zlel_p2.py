@@ -112,7 +112,7 @@ def command_op(info):
     Args:
         info: dict containing all circuit info
     """
-    t = 0  # assumed
+    t = -1
 
     sol = solve_circuit_in_time(info, t)
     print_solution(sol, len(info["br"]), len(info["nd"]))
@@ -121,6 +121,7 @@ def command_op(info):
 def solve_circuit_in_time(info, t):
     """
         Solves circuit in given time.
+        -1 means time independent, amplitudes of B and Y will be used instead.
 
     Args:
         info: dict containing all circuit info
@@ -129,20 +130,21 @@ def solve_circuit_in_time(info, t):
     Returns:
         sol: np.array of size 2b+(n-1), solution for all circuit variables (e, v, i)
     """
+
     a = get_reduced_incidence_matrix(info)
     m, n, u = get_element_matrices(info, t)
 
     a0, a1 = np.size(a, 0), np.size(a, 1)
     m0, m1 = np.size(m, 0), np.size(m, 1)
     tableau_t = np.zeros([a0 + a1 + m0, a0 + m1 + a1], dtype=float)
-    tableau_u = np.zeros(a0 + a1 + m0, dtype=float)
+    tableau_u = np.zeros((a0 + a1 + m0, 1), dtype=float)
 
     tableau_t[:a0, -a1:] = a
     tableau_t[a0:-m0, :a0] = -np.transpose(a)
     tableau_t[a0:-m0, a0:-a1] = np.eye(m1)
     tableau_t[-m0:, a0:-a1] = m
     tableau_t[-m0:, -a1:] = n
-    tableau_u[-m0:] = u
+    tableau_u[-m0:, :] = np.reshape(u, (-1, 1))
 
     return np.linalg.solve(tableau_t, tableau_u)
 
@@ -158,9 +160,9 @@ def command_dc(info, values, control):
         control: control element identifier, np.array size(1)
     """
     start, end, step = values
-    t = 0  # assumed
+    t = -1
 
-    file_name = filename[:-3] + "dc"
+    file_name = filename[:-4] + "_" + control + ".dc"
     header = build_csv_header("t", len(info["br"]), len(info["nd"]))
 
     with open(file_name, 'w') as file:
@@ -168,7 +170,7 @@ def command_dc(info, values, control):
 
         v = start
         while v < end:
-            change_value_of_elem(info, control, v)
+            change_value_of_elem(info, control.lower(), v)
             sol = solve_circuit_in_time(info, t)
 
             # write in csv
@@ -205,7 +207,7 @@ def command_tr(info, values):
     """
     start, end, step = values
 
-    file_name = filename[:-3] + "tr"
+    file_name = filename[:-4] + ".tr"
     header = build_csv_header("t", len(info["br"]), len(info["nd"]))
 
     with open(file_name, 'w') as file:
@@ -287,6 +289,7 @@ def get_element_matrices(info, t):
     """
         If element equations have " M v + N i = u " form, this function builds
         and returns matrices M and N and vector u.
+        t = -1 means time independent, amplitudes of B and Y will be used instead.
 
     Args:
         info: dictionary containing info of the current circuit
@@ -373,17 +376,34 @@ def get_element_matrices(info, t):
         elif branch.startswith("b"):
             m[ind, ind] = 1
             v, f, p = br_val[ind, :]
-            u[ind] = v * np.sin(2*np.pi*f*t + 2*np.pi/360*p)
+            if t == -1:
+                u[ind] = v
+            else:
+                u[ind] = v * np.sin(2*np.pi*f*t + 2*np.pi/360*p)
 
         elif branch.startswith("y"):
             m[ind, ind] = 1
             i, f, p = br_val[ind, :]
-            u[ind] = i * np.sin(2*np.pi*f*t + 2*np.pi/360*p)
+            if t == -1:
+                u[ind] = i
+            else:
+                u[ind] = i * np.sin(2*np.pi*f*t + 2*np.pi/360*p)
 
     return m, n, u
 
 
 def get_reduced_incidence_matrix(info):
+    """
+        Takes whole incidence matrix and returns reduced version.
+        If present, it deletes row corresponding to node 0.
+        If not, it deletes the first row instead.
+
+    Args:
+        info: dict containing all circuit info.
+
+    Returns:
+        A: reduced incidence matrix of the circuit.
+    """
     nd, mat = info["nd"], info["incidence_mat"]
     a = np.flatnonzero(nd == 0)
     if len(a) == 0:
@@ -391,6 +411,25 @@ def get_reduced_incidence_matrix(info):
     else:
         ind = a[0]
         return np.delete(mat, ind, 0)
+
+
+def run_commands(info):
+    """
+        Runs all commands of the circuit.
+
+    Args:
+        info: dict conatining all circuit data.
+    """
+    for ind in range(len(info["com_el"])):
+        com = info["com_el"][ind][1:]
+        if com == "pr":
+            command_pr(info)
+        elif com == "op":
+            command_op(info)
+        elif com == "dc":
+            command_dc(info, info["com_val"][ind, :], info["com_ctr"][ind, :])
+        elif com == "tr":
+            command_tr(info, info["com_val"][ind, :])
 
 
 """    
@@ -404,7 +443,8 @@ if __name__ == "__main__":
     else:
         filename = "../cirs/all/1_zlel_V_R_dc.cir"
 
-    cir_info = process_circuit(filename)
+    info = process_circuit(filename)
+    run_commands(info)
 
     '''for k in cir_info:
         print(k)
@@ -420,5 +460,3 @@ if __name__ == "__main__":
     print("u")
     print(u)
     print()'''
-
-    command_tr(cir_info, (1, 20, 0.1))
