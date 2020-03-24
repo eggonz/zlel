@@ -1,0 +1,15 @@
+Traceback (most recent call last):
+  File "zlel_p2.py", line 450, in <module>
+    run_commands(info)
+  File "zlel_p2.py", line 428, in run_commands
+    command_op(info)
+  File "zlel_p2.py", line 117, in command_op
+    sol = solve_circuit_in_time(info, t)
+  File "zlel_p2.py", line 149, in solve_circuit_in_time
+    return np.linalg.solve(tableau_t, tableau_u)
+  File "<__array_function__ internals>", line 6, in solve
+  File "/home/egoitz/PycharmProjects/zlel/venv/lib/python3.6/site-packages/numpy/linalg/linalg.py", line 399, in solve
+    r = gufunc(a, b, signature=signature, extobj=extobj)
+  File "/home/egoitz/PycharmProjects/zlel/venv/lib/python3.6/site-packages/numpy/linalg/linalg.py", line 97, in _raise_linalgerror_singular
+    raise LinAlgError("Singular matrix")
+numpy.linalg.LinAlgError: Singular matrix

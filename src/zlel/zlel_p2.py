@@ -163,7 +163,7 @@ def command_dc(info, values, control):
     t = -1
 
     file_name = filename[:-4] + "_" + control + ".dc"
-    header = build_csv_header("t", len(info["br"]), len(info["nd"]))
+    header = build_csv_header("V", len(info["br"]), len(info["nd"]))
 
     with open(file_name, 'w') as file:
         print(header, file=file)
@@ -174,7 +174,7 @@ def command_dc(info, values, control):
             sol = solve_circuit_in_time(info, t)
 
             # write in csv
-            sol = np.insert(sol, 0, t)
+            sol = np.insert(sol, 0, v)
             # sol to csv
             sol_csv = ','.join(['%.5f' % num for num in sol])
             print(sol_csv, file=file)
@@ -427,9 +427,12 @@ def run_commands(info):
         elif com == "op":
             command_op(info)
         elif com == "dc":
-            command_dc(info, info["com_val"][ind, :], info["com_ctr"][ind, :])
+            command_dc(info,
+                       np.ndarray.tolist(info["com_val"][ind, :]),
+                       info["com_ctr"][ind])
         elif com == "tr":
-            command_tr(info, info["com_val"][ind, :])
+            command_tr(info,
+                       np.ndarray.tolist(info["com_val"][ind, :]))
 
 
 """    
