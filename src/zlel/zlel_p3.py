@@ -21,7 +21,7 @@ else:
 
 
 
-def diode_NR (I0,nD,Vdj):
+def diode_NR (I0, nD, Vdj):
     """ https://documentation.help/Sphinx/math.html
         Calculates the g and the I of a diode for a NR discrete equivalent
         Given,
@@ -43,7 +43,7 @@ def diode_NR (I0,nD,Vdj):
     Args:
         I0: Value of I0.
         nD: Value of nD.
-        Vd: Value of Vd.
+        Vdj: Value of Vd.
         
     Return:
         gd: Conductance of the NR discrete equivalent for the diode.
@@ -52,11 +52,107 @@ def diode_NR (I0,nD,Vdj):
     """
     
     Vt = 8.6173324e-5*300*nD
+
+    gd = - I0 / Vdj * np.exp(Vdj / Vt)
+    Id = I0 * (np.exp(Vdj / Vt) - 1) + gd * Vdj
     
     return gd, Id
 
 
-    
+def transistor_NR(Ies, Ics, Vbej, Vbcj, alphaR, alphaF, nVt):
+    """
+    This function returns g matrix values for the transistor equations for the next step,
+    ass well as Ebers-Moll currents for inhomogeneous term.
+
+    Args:
+        Ies: Value of Ies
+        Ics: Value of Ics
+        Vbej: Value of Vbe
+        Vbcj: Value of Vbc
+        alphaR: Value of alphaR
+        alphaF: Value of alphaF
+        nVt: Value of n*Vt
+
+    Return:
+        g: np.array of size(2,2) containing transistors equations variation coefficients
+        ebmo: current Ebers-Moll currents in a size(2) np.array
+    """
+
+    g = np.zeros((2, 2))
+
+    '''
+    g[0, 0] = 
+    g[1, 1] = 
+    '''
+    # TODO
+
+    g[0, 1] = - alphaR * g[1, 1]
+    g[1, 0] = - alphaF * g[0, 0]
+
+    ebmo = ebers_moll_currents(Ies, Ics, Vbej, Vbcj, alphaR, alphaF, nVt)
+    return g, ebmo
+
+
+def ebers_moll_currents(Ies, Ics, Vbej, Vbcj, alphaR, alphaF, nVt):
+    """
+    This function returns the current values of Ebers-Moll currents.
+
+    Args:
+        Ies: Value of Ies
+        Ics: Value of Ics
+        Vbej: Value of Vbe
+        Vbcj: Value of Vbc
+        alphaR: Value of alphaR
+        alphaF: Value of alphaF
+        nVt: Value of n*Vt
+
+    Return:
+        ebmo: current Ebers-Moll currents in a size(2) np.array
+    """
+
+    ebmo = np.zeros(2)
+
+    '''
+    ebmo[0] = 
+    ebmo[1] =
+    '''
+    # TODO
+
+    return ebmo
+
+
+def check_non_linear(cir_info):
+    """
+    This function checks the presence of non-linear elements in the circuit.
+
+    Args:
+        cir_info: dict containing all circuit info.
+
+    Returns:
+        nl_elem: list of non-linear elements
+    """
+
+    # TODO
+
+    nl_elem = list()
+
+    return nl_elem
+
+
+def calculate_NR():
+    """
+    """
+
+    # check nonlinear
+
+    while True:
+        # update M, N, u
+        # solve circuit
+        # check circuit valid, then break
+
+    return # solution
+
+
 """   
 https://stackoverflow.com/questions/419163/what-does-if-name-main-do
 """
