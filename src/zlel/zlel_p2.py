@@ -2,9 +2,10 @@
 # -*- coding: utf-8 -*-
 """
 .. module:: zlel_main.py0
-    :synopsis: 
+    :synopsis:
+        This module contains functions to read, manage and solve circuits.
  
-.. moduleauthor:: YOUR NAME AND E-MAIL 
+.. moduleauthor:: Mikel Elorza (mikelelorza0327@gmail.com), Egoitz Gonzalez (egoitz.gonz@gmail.com)
 
 
 """
@@ -15,8 +16,10 @@ import matplotlib.pyplot as plt
 
 if __name__ == "__main__":
     import zlel_p1 as zl1
+    import zlel_p3 as zl3
 else:
     import zlel.zlel_p1 as zl1
+    import zlel.zlel_p3 as zl3
 
 
 def print_solution(sol, b, n):
@@ -118,6 +121,37 @@ def command_op(info):
     print_solution(sol, len(info["br"]), len(info["nd"]))
 
 
+def build_tableau_system(a, m, n, u):
+    """
+        This function takes a, m and n matrices and u vector and uses them to
+        build the linear system that corresponds to Tableau equations.
+
+    Args:
+        a: reduced incidence matrix.
+        m: voltage coefficient matrix
+        n: current coefficient matrix
+        u: independent terms vector
+
+    Returns:
+        T: Tableau matrix.
+        U: Tableau inhomogeneous vector.
+    """
+
+    a0, a1 = np.size(a, 0), np.size(a, 1)
+    m0, m1 = np.size(m, 0), np.size(m, 1)
+    tableau_t = np.zeros([a0 + a1 + m0, a0 + m1 + a1], dtype=float)
+    tableau_u = np.zeros((a0 + a1 + m0, 1), dtype=float)
+
+    tableau_t[:a0, -a1:] = a
+    tableau_t[a0:-m0, :a0] = -np.transpose(a)
+    tableau_t[a0:-m0, a0:-a1] = np.eye(m1)
+    tableau_t[-m0:, a0:-a1] = m
+    tableau_t[-m0:, -a1:] = n
+    tableau_u[-m0:, :] = np.reshape(u, (-1, 1))
+
+    return tableau_t, tableau_u
+
+
 def solve_circuit_in_time(info, t):
     """
         Solves circuit in given time.
@@ -131,20 +165,13 @@ def solve_circuit_in_time(info, t):
         sol: np.array of size 2b+(n-1), solution for all circuit variables (e, v, i)
     """
 
+    if zl3.check_non_linear(info) is not None:
+        return zl3.solve_nl_circuit_in_time(info, t)
+
     a = get_reduced_incidence_matrix(info)
     m, n, u = get_element_matrices(info, t)
 
-    a0, a1 = np.size(a, 0), np.size(a, 1)
-    m0, m1 = np.size(m, 0), np.size(m, 1)
-    tableau_t = np.zeros([a0 + a1 + m0, a0 + m1 + a1], dtype=float)
-    tableau_u = np.zeros((a0 + a1 + m0, 1), dtype=float)
-
-    tableau_t[:a0, -a1:] = a
-    tableau_t[a0:-m0, :a0] = -np.transpose(a)
-    tableau_t[a0:-m0, a0:-a1] = np.eye(m1)
-    tableau_t[-m0:, a0:-a1] = m
-    tableau_t[-m0:, -a1:] = n
-    tableau_u[-m0:, :] = np.reshape(u, (-1, 1))
+    tableau_t, tableau_u = build_tableau_system(a, m, n, u)
 
     return np.linalg.solve(tableau_t, tableau_u)
 
@@ -290,6 +317,7 @@ def get_element_matrices(info, t):
         If element equations have " M v + N i = u " form, this function builds
         and returns matrices M and N and vector u.
         t = -1 means time independent, amplitudes of B and Y will be used instead.
+        Diode and transistor branches (d and q) are empty, and must be filled afterwards.
 
     Args:
         info: dictionary containing info of the current circuit
@@ -324,25 +352,12 @@ def get_element_matrices(info, t):
             n[ind, ind] = -br_val[ind, 0]
 
         elif branch.startswith("d"):
-            m[ind, ind] = br_val[ind, 0] / br_val[ind, 1] / 0.026
-            n[ind, ind] = -1
+            # rows must be filled afterwards
+            pass
 
         elif branch.startswith("q"):
-            # write an equation with each branch
-            ies, ics, bf = br_val[ind, :]
-            af = bf / (1 + bf)
-
-            if branch.endswith("_be"):
-                ind_bc = np.flatnonzero(br == branch[:-2]+"bc")[0]  # index of the control branch in br
-                m[ind, ind] = ies
-                m[ind, ind_bc] = - af * ies
-                n[ind, ind] = -0.026
-
-            elif branch.endswith("_bc"):
-                ind_be = np.flatnonzero(br == branch[:-2]+"be")[0]  # index of the control branch in br
-                m[ind, ind] = ics
-                m[ind, ind_be] = - af * ies
-                n[ind, ind] = -0.026
+            # rows must be filled afterwards
+            pass
 
         elif branch.startswith("a"):
             # write an equation with each branch
