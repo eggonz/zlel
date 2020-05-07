@@ -210,6 +210,7 @@ def nr_method(info, precision=1e-5, t=0):
 
     pr = False
     while not pr:
+        # print(sol)
         prev_sol = sol
         update_all_nl_par(info, prev_sol)
         m, n, u = zl2.get_element_matrices(info, t)
@@ -222,6 +223,7 @@ def nr_method(info, precision=1e-5, t=0):
 
 def check_precision(sol, prev_sol, precision):
     for ind in range(len(sol)):
+        # print(sol-prev_sol)
         if abs(sol[ind] - prev_sol[ind]) > precision:
             return False
     return True

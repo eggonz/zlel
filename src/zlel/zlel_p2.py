@@ -185,7 +185,7 @@ def command_dc(info, values, control):
     start, end, step = values
     t = -1
 
-    file_name = filename[:-4] + "_" + control + ".dc"
+    file_name = info["file_name"][:-4] + "_" + control + ".dc"
     header = build_csv_header("V", len(info["br"]), len(info["nd"]))
 
     with open(file_name, 'w') as file:
@@ -230,7 +230,7 @@ def command_tr(info, values):
     """
     start, end, step = values
 
-    file_name = filename[:-4] + ".tr"
+    file_name = info["file_name"][:-4] + ".tr"
     header = build_csv_header("t", len(info["br"]), len(info["nd"]))
 
     with open(file_name, 'w') as file:
@@ -295,6 +295,7 @@ def process_circuit(filename):
     zl1.check_serial_i(nd, br, br_val, incidence_mat)
 
     return {
+        "file_name": filename,
         "elem_num": len(cir_el),
         "com_el": com_el,
         "com_val": com_val,
@@ -349,21 +350,21 @@ def get_element_matrices(info, t):
 
         elif branch.startswith("d"):
             elem = branch
-            m[ind, ind] = 1
-            n[ind, ind] = zl3.get_d_par(elem)[0]
+            n[ind, ind] = 1
+            m[ind, ind] = zl3.get_d_par(elem)[0]
             u[ind] = zl3.get_d_par(elem)[1]
 
         elif branch.startswith("q"):
             elem = branch[:-3]
-            m[ind, ind] = 1
+            n[ind, ind] = 1
             if branch.endswith("_be"):
-                n[ind, ind] = zl3.get_q_par(elem)[0]
-                n[ind, ind+1] = zl3.get_q_par(elem)[1]
-                u[ind] = zl3.get_q_par(elem)[4]
+                m[ind, ind] = zl3.get_q_par(elem)[0]
+                m[ind, ind+1] = zl3.get_q_par(elem)[1]
+                u[ind] = - zl3.get_q_par(elem)[4]
             elif branch.endswith("_bc"):
-                n[ind, ind] = zl3.get_q_par(elem)[2]
-                n[ind, ind-1] = zl3.get_q_par(elem)[3]
-                u[ind] = zl3.get_q_par(elem)[5]
+                m[ind, ind] = zl3.get_q_par(elem)[2]
+                m[ind, ind-1] = zl3.get_q_par(elem)[3]
+                u[ind] = - zl3.get_q_par(elem)[5]
 
         elif branch.startswith("a"):
             # write an equation with each branch
@@ -467,8 +468,8 @@ if __name__ == "__main__":
     else:
         filename = "../cirs/all/1_zlel_V_R_dc.cir"
 
-    info = process_circuit(filename)
-    run_commands(info)
+    cir_info = process_circuit(filename)
+    run_commands(cir_info)
 
     '''for k in cir_info:
         print(k)
