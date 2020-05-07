@@ -14,12 +14,8 @@ import numpy as np
 import sys
 import matplotlib.pyplot as plt
 
-if __name__ == "__main__":
-    import zlel_p1 as zl1
-    import zlel_p3 as zl3
-else:
-    import zlel.zlel_p1 as zl1
-    import zlel.zlel_p3 as zl3
+import zlel_p1 as zl1
+import zlel_p3 as zl3
 
 
 def print_solution(sol, b, n):
@@ -165,7 +161,7 @@ def solve_circuit_in_time(info, t):
         sol: np.array of size 2b+(n-1), solution for all circuit variables (e, v, i)
     """
 
-    if zl3.check_non_linear(info) is not None:
+    if not zl3.is_linear(info):
         return zl3.solve_nl_circuit_in_time(info, t)
 
     a = get_reduced_incidence_matrix(info)
@@ -352,12 +348,22 @@ def get_element_matrices(info, t):
             n[ind, ind] = -br_val[ind, 0]
 
         elif branch.startswith("d"):
-            # rows must be filled afterwards
-            pass
+            elem = branch
+            m[ind, ind] = 1
+            n[ind, ind] = zl3.get_d_par(elem)[0]
+            u[ind] = zl3.get_d_par(elem)[1]
 
         elif branch.startswith("q"):
-            # rows must be filled afterwards
-            pass
+            elem = branch[:-3]
+            m[ind, ind] = 1
+            if branch.endswith("_be"):
+                n[ind, ind] = zl3.get_q_par(elem)[0]
+                n[ind, ind+1] = zl3.get_q_par(elem)[1]
+                u[ind] = zl3.get_q_par(elem)[4]
+            elif branch.endswith("_bc"):
+                n[ind, ind] = zl3.get_q_par(elem)[2]
+                n[ind, ind-1] = zl3.get_q_par(elem)[3]
+                u[ind] = zl3.get_q_par(elem)[5]
 
         elif branch.startswith("a"):
             # write an equation with each branch

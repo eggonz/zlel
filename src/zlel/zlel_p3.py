@@ -11,19 +11,18 @@
 
 
 """
+import time
+
 import numpy as np
 import sys
 
-if __name__ == "__main__":
-    import zlel_p1 as zl1
-    import zlel_p2 as zl2
-else:
-    import zlel.zlel_p1 as zl1
-    import zlel.zlel_p2 as zl2
+import zlel_p2 as zl2
+
+d_parameters = dict()
+q_parameters = dict()
 
 
-
-def diode_NR (I0, nD, Vdj):
+def diode_nr(I0, nD, Vdj):
     """ https://documentation.help/Sphinx/math.html
         Calculates the g and the I of a diode for a NR discrete equivalent.
         Given,
@@ -61,7 +60,19 @@ def diode_NR (I0, nD, Vdj):
     return gd, Id
 
 
-def transistor_NR(Ies, Ics, Vbej, Vbcj, alphaR, alphaF, nVt):
+def update_diode_par(info, Vdj, br_name):
+    ind = np.where(info["br"] == br_name)[0][0]  # getting index from np.array
+    nD = info["br_val"][ind][1]
+    I0 = info["br_val"][ind][0]
+    gd, Id = diode_nr(I0, nD, Vdj)
+    d_parameters[br_name.lower()] = [gd, Id]
+
+
+def get_d_par(elem_name):
+    return d_parameters[elem_name.lower()]
+
+
+def transistor_nr(Ies, Ics, Vbej, Vbcj, alphaR, alphaF, n=1):
     """
     This function returns g matrix values for the transistor equations for the next step,
     ass well as Ebers-Moll currents for inhomogeneous term.
@@ -80,18 +91,17 @@ def transistor_NR(Ies, Ics, Vbej, Vbcj, alphaR, alphaF, nVt):
         ebmo: current Ebers-Moll currents in a size(2) np.array.
     """
 
-    g = np.zeros((2, 2))
+    nVt = n * 8.6173324e-5 * 300
 
-    g[0, 0] = - Ies / nVt * np.exp(Vbej / nVt)
-    g[1, 1] = - Ics / nVt * np.exp(Vbcj / nVt)
-    g[0, 1] = - alphaR * g[1, 1]
-    g[1, 0] = - alphaF * g[0, 0]
+    g11 = - Ies / nVt * np.exp(Vbej / nVt)
+    g22 = - Ics / nVt * np.exp(Vbcj / nVt)
+    g12 = - alphaR * g22
+    g21 = - alphaF * g11
 
-    ebmo = ebers_moll_currents(Ies, Ics, Vbej, Vbcj, alphaR, alphaF, nVt)
-    return g, ebmo
+    return g11, g12, g21, g22
 
 
-def ebers_moll_currents(Ies, Ics, Vbej, Vbcj, alphaR, alphaF, nVt):
+def ebers_moll_currents(Ies, Ics, Vbej, Vbcj, alphaR, alphaF, n=1):
     """
     This function returns the current values of Ebers-Moll currents.
 
@@ -108,35 +118,72 @@ def ebers_moll_currents(Ies, Ics, Vbej, Vbcj, alphaR, alphaF, nVt):
         ebmo: current Ebers-Moll ie and ic currents, in a size(2) np.array.
     """
 
-    ebmo = np.zeros(2)
+    nVt = n * 8.6173324e-5 * 300
 
-    ebmo[0] = Ies * (np.exp(Vbej / nVt) - 1) - alphaR * Ics * (np.exp(Vbcj / nVt) - 1)
-    ebmo[1] = - alphaF * Ies * (np.exp(Vbej / nVt) - 1) + Ics * (np.exp(Vbcj / nVt) - 1)
+    ebmoIe = Ies * (np.exp(Vbej / nVt) - 1) - alphaR * Ics * (np.exp(Vbcj / nVt) - 1)
+    ebmoIc = - alphaF * Ies * (np.exp(Vbej / nVt) - 1) + Ics * (np.exp(Vbcj / nVt) - 1)
 
-    return ebmo
+    return ebmoIe, ebmoIc
 
 
-def check_non_linear(cir_info):
+def update_transistor_par(info, Vbej, Vbcj, br_name):
+    ind = np.where(info["br"] == br_name)[0][0]  # getting index from np.array
+    Ies = info["br_val"][ind][0]
+    Ics = info["br_val"][ind][1]
+    beta = info["br_val"][ind][2]
+    alphaF = beta / (beta + 1)
+    alphaR = Ies / Ics * alphaF
+
+    g11, g12, g21, g22 = transistor_nr(Ies, Ics, Vbej, Vbcj, alphaR, alphaF, n=1)
+    ebmoIe, ebmoIc = ebers_moll_currents(Ies, Ics, Vbej, Vbcj, alphaR, alphaF, n=1)
+    q_parameters[br_name[:-3].lower()] = [g11, g12, g21, g22, ebmoIe, ebmoIc]
+
+
+def get_q_par(elem_name):
+    return q_parameters[elem_name.lower()]
+
+
+def update_all_nl_par(info, tableau_sol):
+    n = len(info["nd"])
+    for ind in range(len(info["br"])):
+        br = info["br"][ind]
+        if br.startswith("d"):
+            vd = tableau_sol[n + ind]
+            update_diode_par(info, vd, br)
+        elif br.startswith("q") and br.endswith("_be"): # update once per element
+            vbe = tableau_sol[n + ind]
+            vbc = tableau_sol[n + ind + 1]
+            update_transistor_par(info, vbe, vbc, br)
+
+
+def set_initial_nl_par(info):
+
+    # Initial values for NR iterations
+    vd0 = vbe0 = vbc0 = 0.6
+
+    for ind in range(len(info["br"])):
+        br = info["br"][ind]
+        if br.startswith("d"):
+            update_diode_par(info, vd0, br)
+        elif br.startswith("q") and br.endswith("_be"):  # update once per element
+            update_transistor_par(info, vbe0, vbc0, br)
+
+
+def is_linear(info):
     """
     This function checks the presence of non-linear elements in the circuit.
 
     Args:
-        cir_info: dict containing all circuit info.
+        info: dict containing all circuit info.
 
     Returns:
-        nl_br: list of non-linear elements' branches.
+        nl: list of non-linear elements' branches' indices.
     """
-
-    linear = True
-    nl_br = np.empty(1)
-
-    for br in cir_info["br"]:
+    for br in info["br"]:
         if br.lower().startswith("d") or br.lower().startswith("q"):
-            linear = False
-            nl_br = np.append(nl_br, br)
+            return False
+    return True
 
-    if linear: return
-    return nl_br
 
 def solve_nl_circuit_in_time(info, t):
     """
@@ -150,76 +197,52 @@ def solve_nl_circuit_in_time(info, t):
     Returns:
         sol: np.array of size 2b+(n-1), solution for all circuit variables (e, v, i).
     """
+    return nr_method(info, t=t)
 
+
+def nr_method(info, precision=1e-5, t=0):
     a = zl2.get_reduced_incidence_matrix(info)
+
+    set_initial_nl_par(info)
     m, n, u = zl2.get_element_matrices(info, t)
-
-    # TODO update m, n, u
-    #      solve NR
-
     tableau_t, tableau_u = zl2.build_tableau_system(a, m, n, u)
+    sol = np.linalg.solve(tableau_t, tableau_u)
 
-    return np.linalg.solve(tableau_t, tableau_u)
+    pr = False
+    while not pr:
+        prev_sol = sol
+        update_all_nl_par(info, prev_sol)
+        m, n, u = zl2.get_element_matrices(info, t)
+        tableau_t, tableau_u = zl2.build_tableau_system(a, m, n, u)
+        sol = np.linalg.solve(tableau_t, tableau_u)
+        pr = check_precision(sol, prev_sol, precision)
+
+    return sol
 
 
-def calculate_NR(info, t):
-    """
-        Given a circuit and a time, this function solves tableau equations
-        by NR method, and provides circuit's solution in the given time.
+def check_precision(sol, prev_sol, precision):
+    for ind in range(len(sol)):
+        if abs(sol[ind] - prev_sol[ind]) > precision:
+            return False
+    return True
 
-    Args:
-    info: dict containing all circuit info.
-        t: time
-
-    Returns:
-
-    """
-
-    nl_br = check_non_linear(cir_info)
-    if nl_br is None:
-        # TODO
-        pass
-
-    while True:
-        # update M, N, u
-        # solve circuit
-        # check circuit valid, then break
-
-    return # solution
-
-def insert_elem_eq_d_m(cir_info, m, ind_d, t):
-
-def insert_elem_eq_d_n(cir_info, n, ind_d, t):
-
-def insert_elem_eq_d_u(cir_info, u, ind_d, t):
-
-def insert_elem_eq_qbe_m():
-
-def insert_elem_eq_qbe_n():
-
-def insert_elem_eq_qbe_u():
-
-def insert_elem_eq_qbc_m():
-
-def insert_elem_eq_qbc_n():
-
-def insert_elem_eq_qbc_u():
 
 """   
 https://stackoverflow.com/questions/419163/what-does-if-name-main-do
 """
 if __name__ == "__main__":
-#    start = time.perf_counter()
+    start = time.perf_counter()
     if len(sys.argv) > 1:
         filename = sys.argv[1]
     else:
-        filename = "../cirs/all/2_zlel_Q.cir"
         filename = "../cirs/all/2_zlel_1D.cir"
-        
+
+    cir_info = zl2.process_circuit(filename)
+    zl2.run_commands(cir_info)
     
-#    end = time.perf_counter()
-#    print ("Elapsed time: ")
-#    print(end - start) # Time in seconds
+    end = time.perf_counter()
+    print("Elapsed time: ")
+    print(end - start)  # Time in seconds
     
     
     
