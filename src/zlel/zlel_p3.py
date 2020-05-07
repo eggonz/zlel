@@ -61,6 +61,14 @@ def diode_nr(I0, nD, Vdj):
 
 
 def update_diode_par(info, Vdj, br_name):
+    """
+        This function updates the values for the NR parameters of the given diode.
+
+    Args:
+        info: dict containing all circuit info.
+        Vdj: current value for Vd.
+        br_name: name of one of the element's branch, whose parameters will be updated.
+    """
     ind = np.where(info["br"] == br_name)[0][0]  # getting index from np.array
     nD = info["br_val"][ind][1]
     I0 = info["br_val"][ind][0]
@@ -69,6 +77,15 @@ def update_diode_par(info, Vdj, br_name):
 
 
 def get_d_par(elem_name):
+    """
+        This function returns the list of parameters of the given diode.
+
+    Args:
+        elem_name: diode element name.
+
+    Returns:
+        list of diode NR parameters.
+    """
     return d_parameters[elem_name.lower()]
 
 
@@ -87,8 +104,8 @@ def transistor_nr(Ies, Ics, Vbej, Vbcj, alphaR, alphaF, n=1):
         nVt: Value of n*Vt.
 
     Return:
-        g: np.array of size(2,2) containing transistors equations variation coefficients.
-        ebmo: current Ebers-Moll currents in a size(2) np.array.
+        g: size 4 tuple containing transistors equations variation coefficients
+            g11, g12, g21, g22.
     """
 
     nVt = n * 8.6173324e-5 * 300
@@ -115,7 +132,8 @@ def ebers_moll_currents(Ies, Ics, Vbej, Vbcj, alphaR, alphaF, n=1):
         nVt: Value of n*Vt
 
     Return:
-        ebmo: current Ebers-Moll ie and ic currents, in a size(2) np.array.
+        ebmoIe: current Ebers-Moll Ie current
+        ebmoIc: current Ebers-Moll Ic current
     """
 
     nVt = n * 8.6173324e-5 * 300
@@ -127,6 +145,14 @@ def ebers_moll_currents(Ies, Ics, Vbej, Vbcj, alphaR, alphaF, n=1):
 
 
 def update_transistor_par(info, Vbej, Vbcj, br_name):
+    """
+        This function updates the values for the NR parameters of the given transistor.
+
+    Args:
+        info: dict containing all circuit info.
+        Vdj: current value for Vd.
+        br_name: name of one of the element's branch, whose parameters will be updated.
+    """
     ind = np.where(info["br"] == br_name)[0][0]  # getting index from np.array
     Ies = info["br_val"][ind][0]
     Ics = info["br_val"][ind][1]
@@ -140,10 +166,26 @@ def update_transistor_par(info, Vbej, Vbcj, br_name):
 
 
 def get_q_par(elem_name):
+    """
+        This function returns the list of parameters of the given transistor.
+
+    Args:
+        elem_name: transistor element name.
+
+    Returns:
+        list of transistor NR parameters.
+    """
     return q_parameters[elem_name.lower()]
 
 
 def update_all_nl_par(info, tableau_sol):
+    """
+        This function updates all the parameters of every diode and transistor.
+
+    Args:
+        info: dict containing all circuit info.
+        tableau_sol: np.array containing the last solution of Tableau equations' system.
+    """
     n = len(info["nd"])
     for ind in range(len(info["br"])):
         br = info["br"][ind]
@@ -157,6 +199,17 @@ def update_all_nl_par(info, tableau_sol):
 
 
 def set_initial_nl_par(info):
+    """
+        This function sets all the parameters of every diode and transistor
+        to their respective initial values.
+
+        Initial values are:
+        Diode: Vd0 = 0.6
+        Transistor: Vbe0 = 0.6 Vbc0 = 0.6
+
+    Args:
+        info: dict containing all circuit info.
+    """
 
     # Initial values for NR iterations
     vd0 = vbe0 = vbc0 = 0.6
@@ -171,13 +224,14 @@ def set_initial_nl_par(info):
 
 def is_linear(info):
     """
-    This function checks the presence of non-linear elements in the circuit.
+        This function checks the presence of diode and transistors
+        (non-linear elements) in the circuit.
 
     Args:
         info: dict containing all circuit info.
 
     Returns:
-        nl: list of non-linear elements' branches' indices.
+        bool: True if circuit has no diode or transistors.
     """
     for br in info["br"]:
         if br.lower().startswith("d") or br.lower().startswith("q"):
@@ -200,7 +254,20 @@ def solve_nl_circuit_in_time(info, t):
     return nr_method(info, t=t)
 
 
-def nr_method(info, precision=1e-5, t=0):
+def nr_method(info, precision=1e-5, t=-1):
+    """
+        Applies Newton-Raphson method to solve non-linear circuit
+        in given time with given convergence precision.
+        -1 means time independent, amplitudes of B and Y will be used instead.
+        Default precision: 1e-5
+
+    Args:
+        info: dict containing all circuit info.
+        t: time in seconds.
+
+    Returns:
+        sol: np.array of size(1,2b+(n-1)), solution for all circuit variables (e, v, i).
+    """
     a = zl2.get_reduced_incidence_matrix(info)
 
     set_initial_nl_par(info)
@@ -222,6 +289,18 @@ def nr_method(info, precision=1e-5, t=0):
 
 
 def check_precision(sol, prev_sol, precision):
+    """
+        This function compares 2 consecutive solutions of Tableau equation system
+        to check convergence precision. It return whether precision is correct.
+
+    Args:
+        sol: current solution of Tableau equation system.
+        prev_sol: previous solution of Tableau equation system.
+        precision: requested convergence precision.
+
+    Returns:
+        bool: True if solution is accurate and convergent.
+    """
     for ind in range(len(sol)):
         # print(sol-prev_sol)
         if abs(sol[ind] - prev_sol[ind]) > precision:
