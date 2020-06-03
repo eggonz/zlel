@@ -54,8 +54,8 @@ def diode_nr(I0, nD, Vdj):
     
     Vt = 8.6173324e-5*300*nD
 
-    gd = - I0 / Vdj * np.exp(Vdj / Vt)
-    Id = I0 * (np.exp(Vdj / Vt) - 1) + gd * Vdj
+    gd =  I0 / Vt * np.exp(Vdj / Vt)
+    Id = I0 * (np.exp(Vdj / Vt) - 1) - gd * Vdj
     
     return gd, Id
 
@@ -110,15 +110,15 @@ def transistor_nr(Ies, Ics, Vbej, Vbcj, alphaR, alphaF, n=1):
 
     nVt = n * 8.6173324e-5 * 300
 
-    g11 = - Ies / nVt * np.exp(Vbej / nVt)
-    g22 = - Ics / nVt * np.exp(Vbcj / nVt)
-    g12 = - alphaR * g22
-    g21 = - alphaF * g11
+    g11 =  Ies / nVt * np.exp(Vbej / nVt)
+    g22 =  Ics / nVt * np.exp(Vbcj / nVt)
+    g12 = -alphaR * g22
+    g21 = -alphaF * g11
 
     return g11, g12, g21, g22
 
 
-def ebers_moll_currents(Ies, Ics, Vbej, Vbcj, alphaR, alphaF, n=1):
+def ebers_moll_currents(Ies, Ics, Vbej, Vbcj, alphaR, alphaF,g11,g12,g21,g22, n=1):
     """
     This function returns the current values of Ebers-Moll currents.
 
@@ -138,8 +138,8 @@ def ebers_moll_currents(Ies, Ics, Vbej, Vbcj, alphaR, alphaF, n=1):
 
     nVt = n * 8.6173324e-5 * 300
 
-    ebmoIe = Ies * (np.exp(Vbej / nVt) - 1) - alphaR * Ics * (np.exp(Vbcj / nVt) - 1)
-    ebmoIc = - alphaF * Ies * (np.exp(Vbej / nVt) - 1) + Ics * (np.exp(Vbcj / nVt) - 1)
+    ebmoIe = -g11*Vbej-g12*Vbcj+Ies * (np.exp(Vbej / nVt) - 1) - alphaR * Ics * (np.exp(Vbcj / nVt) - 1)
+    ebmoIc = -g21*Vbej-g22*Vbcj- alphaF * Ies * (np.exp(Vbej / nVt) - 1) + Ics * (np.exp(Vbcj / nVt) - 1)
 
     return ebmoIe, ebmoIc
 
@@ -161,7 +161,7 @@ def update_transistor_par(info, Vbej, Vbcj, br_name):
     alphaR = Ies / Ics * alphaF
 
     g11, g12, g21, g22 = transistor_nr(Ies, Ics, Vbej, Vbcj, alphaR, alphaF, n=1)
-    ebmoIe, ebmoIc = ebers_moll_currents(Ies, Ics, Vbej, Vbcj, alphaR, alphaF, n=1)
+    ebmoIe, ebmoIc = ebers_moll_currents(Ies, Ics, Vbej, Vbcj, alphaR, alphaF,g11,g12,g21,g22, n=1)
     q_parameters[br_name[:-3].lower()] = [g11, g12, g21, g22, ebmoIe, ebmoIc]
 
 
@@ -189,12 +189,13 @@ def update_all_nl_par(info, tableau_sol):
     n = len(info["nd"])
     for ind in range(len(info["br"])):
         br = info["br"][ind]
+        br=br.lower()
         if br.startswith("d"):
-            vd = tableau_sol[n + ind]
+            vd = tableau_sol[n + ind-1]
             update_diode_par(info, vd, br)
         elif br.startswith("q") and br.endswith("_be"): # update once per element
-            vbe = tableau_sol[n + ind]
-            vbc = tableau_sol[n + ind + 1]
+            vbe = tableau_sol[n + ind-1]
+            vbc = tableau_sol[n + ind]
             update_transistor_par(info, vbe, vbc, br)
 
 
@@ -216,6 +217,7 @@ def set_initial_nl_par(info):
 
     for ind in range(len(info["br"])):
         br = info["br"][ind]
+        br = br.lower()
         if br.startswith("d"):
             update_diode_par(info, vd0, br)
         elif br.startswith("q") and br.endswith("_be"):  # update once per element
@@ -269,22 +271,20 @@ def nr_method(info, precision=1e-5, t=-1):
         sol: np.array of size(1,2b+(n-1)), solution for all circuit variables (e, v, i).
     """
     a = zl2.get_reduced_incidence_matrix(info)
-
     set_initial_nl_par(info)
     m, n, u = zl2.get_element_matrices(info, t)
     tableau_t, tableau_u = zl2.build_tableau_system(a, m, n, u)
     sol = np.linalg.solve(tableau_t, tableau_u)
-
     pr = False
     while not pr:
-        # print(sol)
+        
         prev_sol = sol
         update_all_nl_par(info, prev_sol)
         m, n, u = zl2.get_element_matrices(info, t)
         tableau_t, tableau_u = zl2.build_tableau_system(a, m, n, u)
         sol = np.linalg.solve(tableau_t, tableau_u)
         pr = check_precision(sol, prev_sol, precision)
-
+       
     return sol
 
 
@@ -316,14 +316,14 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         filename = sys.argv[1]
     else:
-        filename = "../cirs/all/2_zlel_1D.cir"
+        filename = "../cirs/all/2_zlel_Q_ezaugarri.cir"
 
     cir_info = zl2.process_circuit(filename)
     zl2.run_commands(cir_info)
     
     end = time.perf_counter()
-    print("Elapsed time: ")
-    print(end - start)  # Time in seconds
+    # print("Elapsed time: ")
+    # print(end - start)  # Time in seconds
     
     
     

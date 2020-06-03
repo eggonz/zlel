@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 
 import zlel_p1 as zl1
 import zlel_p3 as zl3
+import zlel_p4 as zl4
 
 
 def print_solution(sol, b, n):
@@ -30,12 +31,15 @@ def print_solution(sol, b, n):
     """
     print("\n========== Nodes voltage to reference ========")
     for i in range(1, n):
+        # print("e" + str(i) + " = ", '['+','.join(['% .8f' % num for num in sol[i-1]])+']')
         print("e" + str(i) + " = ", sol[i-1])
     print("\n========== Branches voltage difference ========")
     for i in range(1, b+1):
+        # print("v" + str(i) + " = ", '['+','.join(['% .8f' % num for num in sol[i+n-2]])+']')
         print("v" + str(i) + " = ", sol[i+n-2])
     print("\n=============== Branches currents ==============")
     for i in range(1, b+1):
+        # print("i" + str(i) + " = ", '['+','.join(['% .8f' % num for num in sol[i+b+n-2]])+']')
         print("i" + str(i) + " = ", sol[i+b+n-2])
         
     print("\n================= End solution =================\n")
@@ -160,16 +164,18 @@ def solve_circuit_in_time(info, t):
     Returns:
         sol: np.array of size 2b+(n-1), solution for all circuit variables (e, v, i)
     """
-
+    
     if not zl3.is_linear(info):
         return zl3.solve_nl_circuit_in_time(info, t)
-
+        
     a = get_reduced_incidence_matrix(info)
     m, n, u = get_element_matrices(info, t)
-
+    
     tableau_t, tableau_u = build_tableau_system(a, m, n, u)
 
-    return np.linalg.solve(tableau_t, tableau_u)
+    sol = np.linalg.solve(tableau_t, tableau_u)
+    
+    return sol
 
 
 def command_dc(info, values, control):
@@ -185,7 +191,7 @@ def command_dc(info, values, control):
     start, end, step = values
     t = -1
 
-    file_name = info["file_name"][:-4] + "_" + control + ".dc"
+    file_name = info["file_name"][:-4] + "_" + control + ".dc"  # TODO lower
     header = build_csv_header("V", len(info["br"]), len(info["nd"]))
 
     with open(file_name, 'w') as file:
@@ -193,7 +199,7 @@ def command_dc(info, values, control):
 
         v = start
         while v < end:
-            change_value_of_elem(info, control.lower(), v)
+            change_value_of_elem(info, control.lower(), v)  # TODO lower
             sol = solve_circuit_in_time(info, t)
 
             # write in csv
@@ -229,24 +235,26 @@ def command_tr(info, values):
         values: value info for command, np.array size(3)
     """
     start, end, step = values
-
+   
     file_name = info["file_name"][:-4] + ".tr"
     header = build_csv_header("t", len(info["br"]), len(info["nd"]))
-
     with open(file_name, 'w') as file:
         print(header, file=file)
-
+        if not zl4.is_not_dynamic(info):
+            zl4.initialize(info, step)
         t = start
+        sol = solve_circuit_in_time(info, t)
         while t < end:
+            t += step
+            if not zl4.is_not_dynamic(info):
+                zl4.update_state(info, sol)
             sol = solve_circuit_in_time(info, t)
-
+            
             # write in csv
             sol = np.insert(sol, 0, t)
             # sol to csv
             sol_csv = ','.join(['%.5f' % num for num in sol])
             print(sol_csv, file=file)
-
-            t += step
 
 
 def process_circuit(filename):
@@ -273,8 +281,8 @@ def process_circuit(filename):
 
     # Parse the circuit
     cir_el, cir_nd, cir_val, cir_ctr = zl1.cir_parser(filename)
-    cir_el = np.array(list(map(lambda x: x.lower(), cir_el)))
-    cir_ctr = np.array(list(map(lambda x: x.lower(), cir_ctr)))
+    # cir_el = np.array(list(map(lambda x: x.lower(), cir_el)))
+    # cir_ctr = np.array(list(map(lambda x: x.lower(), cir_ctr)))
 
     # Differentiate commands from elements in file
     n = sum(1 for elem in cir_el if elem.startswith("."))
@@ -333,8 +341,10 @@ def get_element_matrices(info, t):
     n = np.zeros(shape=(len(br), len(br)), dtype=float)
     u = np.zeros(shape=len(br), dtype=float)
 
+    br_lower = np.array(list(map(lambda x: x.lower(), br)))
+
     for ind in range(len(br)):
-        branch = br[ind].lower()
+        branch = br_lower[ind]
 
         if branch.startswith("v"):
             m[ind, ind] = 1
@@ -351,24 +361,24 @@ def get_element_matrices(info, t):
         elif branch.startswith("d"):
             elem = branch
             n[ind, ind] = 1
-            m[ind, ind] = zl3.get_d_par(elem)[0]
+            m[ind, ind] = -zl3.get_d_par(elem)[0]
             u[ind] = zl3.get_d_par(elem)[1]
 
         elif branch.startswith("q"):
             elem = branch[:-3]
             n[ind, ind] = 1
             if branch.endswith("_be"):
-                m[ind, ind] = zl3.get_q_par(elem)[0]
-                m[ind, ind+1] = zl3.get_q_par(elem)[1]
-                u[ind] = - zl3.get_q_par(elem)[4]
+                m[ind, ind] = -zl3.get_q_par(elem)[0]
+                m[ind, ind+1] = -zl3.get_q_par(elem)[1]
+                u[ind] = zl3.get_q_par(elem)[4]
             elif branch.endswith("_bc"):
-                m[ind, ind] = zl3.get_q_par(elem)[2]
-                m[ind, ind-1] = zl3.get_q_par(elem)[3]
-                u[ind] = - zl3.get_q_par(elem)[5]
+                m[ind, ind] = -zl3.get_q_par(elem)[3]
+                m[ind, ind-1] = -zl3.get_q_par(elem)[2]
+                u[ind] = zl3.get_q_par(elem)[5]
 
         elif branch.startswith("a"):
             # write an equation with each branch
-            ind_in = np.flatnonzero(br == branch[:-2] + "in")[0]  # index of the control branch in br
+            ind_in = np.flatnonzero(br_lower == branch[:-2] + "in")[0]  # index of the control branch in br
 
             if branch.endswith("_in"):
                 n[ind, ind_in] = 1
@@ -377,22 +387,22 @@ def get_element_matrices(info, t):
 
         elif branch.startswith("e"):
             m[ind, ind] = 1
-            ind_ctr = np.flatnonzero(br == br_ctr[ind])[0]  # index of the control branch in br
+            ind_ctr = np.flatnonzero(br_lower == br_ctr[ind].lower())[0]  # index of the control branch in br
             m[ind, ind_ctr] = -br_val[ind, 0]
 
         elif branch.startswith("g"):
             n[ind, ind] = 1
-            ind_ctr = np.flatnonzero(br == br_ctr[ind])[0]  # index of the control branch in br
+            ind_ctr = np.flatnonzero(br_lower == br_ctr[ind].lower())[0]  # index of the control branch in br
             m[ind, ind_ctr] = -br_val[ind, 0]
 
         elif branch.startswith("h"):
             m[ind, ind] = 1
-            ind_ctr = np.flatnonzero(br == br_ctr[ind])[0]  # index of the control branch in br
+            ind_ctr = np.flatnonzero(br_lower == br_ctr[ind].lower())[0]  # index of the control branch in br
             n[ind, ind_ctr] = -br_val[ind, 0]
 
         elif branch.startswith("f"):
             n[ind, ind] = 1
-            ind_ctr = np.flatnonzero(br == br_ctr[ind])[0]  # index of the control branch in br
+            ind_ctr = np.flatnonzero(br_lower == br_ctr[ind].lower())[0]  # index of the control branch in br
             n[ind, ind_ctr] = -br_val[ind, 0]
 
         elif branch.startswith("b"):
@@ -410,6 +420,16 @@ def get_element_matrices(info, t):
                 u[ind] = i
             else:
                 u[ind] = i * np.sin(2*np.pi*f*t + 2*np.pi/360*p)
+                
+        elif branch.startswith("c"):
+            m[ind, ind] = 1
+            n[ind, ind] = -zl4.step/br_val[ind][0]
+            u[ind] = zl4.v_aurreko[branch]
+
+        if branch.startswith("l"):
+            m[ind, ind] = 1
+            n[ind, ind] = -zl4.step/br_val[ind][0]
+            u[ind] = zl4.i_aurreko[branch]
 
     return m, n, u
 
@@ -440,7 +460,7 @@ def run_commands(info):
         Runs all commands of the circuit.
 
     Args:
-        info: dict conatining all circuit data.
+        info: dict containing all circuit data.
     """
     for ind in range(len(info["com_el"])):
         com = info["com_el"][ind][1:]
@@ -466,22 +486,9 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         filename = sys.argv[1]
     else:
-        filename = "../cirs/all/1_zlel_V_R_dc.cir"
+        filename = "../cirs/all/1_zlel_anpli.cir"
 
+    print("a")
     cir_info = process_circuit(filename)
+    
     run_commands(cir_info)
-
-    '''for k in cir_info:
-        print(k)
-        print(cir_info[k])
-
-    m, n, u = get_element_matrices(cir_info, 1/4/0.05)
-
-    print()
-    print("m")
-    print(m)
-    print("n")
-    print(n)
-    print("u")
-    print(u)
-    print()'''

@@ -284,7 +284,7 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         filename = sys.argv[1]
     else:
-        filename = "../cirs/all/0_zlel_node_float.cir"
+        filename = "../cirs/all/0_zlel_OPAMP.cir"
 
     # Parse the circuit
     cir_el, cir_nd, cir_val, cir_ctr = cir_parser(filename)
