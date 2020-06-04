@@ -1,0 +1,439 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>zlel.zlel_p3 &#8212; ZLEL 0.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for zlel.zlel_p3</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">.. module:: zlel_p3.py</span>
+<span class="sd">    :synopsis:</span>
+<span class="sd">        This module solves more complex circuits containing some non-linear elements</span>
+<span class="sd">        such as diodes or transistors using numerical methods.</span>
+<span class="sd"> </span>
+<span class="sd">.. moduleauthor:: Mikel Elorza (mikelelorza0327@gmail.com), Egoitz Gonzalez (egoitz.gonz@gmail.com)</span>
+
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;zlel.zlel_p3&quot;</span> <span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">zlel.zlel_p2</span> <span class="k">as</span> <span class="nn">zl2</span>
+    
+<span class="k">else</span> <span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">zlel_p2</span> <span class="k">as</span> <span class="nn">zl2</span>
+    
+
+<span class="n">d_parameters</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+<span class="n">q_parameters</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="diode_nr"><a class="viewcode-back" href="../../zlel.html#zlel.zlel_p3.diode_nr">[docs]</a><span class="k">def</span> <span class="nf">diode_nr</span><span class="p">(</span><span class="n">I0</span><span class="p">,</span> <span class="n">nD</span><span class="p">,</span> <span class="n">Vdj</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; https://documentation.help/Sphinx/math.html</span>
+<span class="sd">        Calculates the g and the I of a diode for a NR discrete equivalent.</span>
+<span class="sd">        Given,</span>
+<span class="sd">        </span>
+<span class="sd">        :math:`Id = I_0(e^{(\\frac{V_d}{nV_T})}-1)`</span>
+<span class="sd">        </span>
+<span class="sd">        The NR discrete equivalent will be,</span>
+<span class="sd">        </span>
+<span class="sd">        :math:`i_{j+1} + g v_{j+1} = I`</span>
+<span class="sd">        </span>
+<span class="sd">        where,</span>
+<span class="sd">        </span>
+<span class="sd">        :math:`g = -\\frac{I_0}{nV_T}e^{(\\frac{V_d}{nV_T})}`</span>
+<span class="sd">        </span>
+<span class="sd">        and</span>
+<span class="sd">        </span>
+<span class="sd">        :math:`I = I_0(e^{(\\frac{V_{dj}}{nV_T})}-1) + gV_{dj}`</span>
+<span class="sd">        </span>
+<span class="sd">    Args:</span>
+<span class="sd">        I0: Value of I0.</span>
+<span class="sd">        nD: Value of nD.</span>
+<span class="sd">        Vdj: Value of Vd.</span>
+<span class="sd">        </span>
+<span class="sd">    Return:</span>
+<span class="sd">        gd: Conductance of the NR discrete equivalent for the diode.</span>
+<span class="sd">        Id: Current independent source of the NR discrete equivalent.</span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="n">Vt</span> <span class="o">=</span> <span class="mf">8.6173324e-5</span><span class="o">*</span><span class="mi">300</span><span class="o">*</span><span class="n">nD</span>
+
+    <span class="n">gd</span> <span class="o">=</span> <span class="n">I0</span> <span class="o">/</span> <span class="n">Vt</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">Vdj</span> <span class="o">/</span> <span class="n">Vt</span><span class="p">)</span>
+    <span class="n">Id</span> <span class="o">=</span> <span class="n">I0</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">Vdj</span> <span class="o">/</span> <span class="n">Vt</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="n">gd</span> <span class="o">*</span> <span class="n">Vdj</span>
+    
+    <span class="k">return</span> <span class="n">gd</span><span class="p">,</span> <span class="n">Id</span></div>
+
+
+<div class="viewcode-block" id="update_diode_par"><a class="viewcode-back" href="../../zlel.html#zlel.zlel_p3.update_diode_par">[docs]</a><span class="k">def</span> <span class="nf">update_diode_par</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">Vdj</span><span class="p">,</span> <span class="n">br_name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This function updates the values for the NR parameters of the given diode.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        info: dict containing all circuit info.</span>
+<span class="sd">        Vdj: current value for Vd.</span>
+<span class="sd">        br_name: name of one of the element&#39;s branch, whose parameters will be updated.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">br_lower</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;br&quot;</span><span class="p">])))</span>
+    <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">br_lower</span> <span class="o">==</span> <span class="n">br_name</span><span class="o">.</span><span class="n">lower</span><span class="p">())[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># getting index from np.array</span>
+    <span class="n">nD</span> <span class="o">=</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;br_val&quot;</span><span class="p">][</span><span class="n">ind</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">I0</span> <span class="o">=</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;br_val&quot;</span><span class="p">][</span><span class="n">ind</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">gd</span><span class="p">,</span> <span class="n">Id</span> <span class="o">=</span> <span class="n">diode_nr</span><span class="p">(</span><span class="n">I0</span><span class="p">,</span> <span class="n">nD</span><span class="p">,</span> <span class="n">Vdj</span><span class="p">)</span>
+    <span class="n">d_parameters</span><span class="p">[</span><span class="n">br_name</span><span class="o">.</span><span class="n">lower</span><span class="p">()]</span> <span class="o">=</span> <span class="p">[</span><span class="n">gd</span><span class="p">,</span> <span class="n">Id</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="get_d_par"><a class="viewcode-back" href="../../zlel.html#zlel.zlel_p3.get_d_par">[docs]</a><span class="k">def</span> <span class="nf">get_d_par</span><span class="p">(</span><span class="n">elem_name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This function returns the list of parameters of the given diode.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        elem_name: diode element name.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        list of diode NR parameters.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">d_parameters</span><span class="p">[</span><span class="n">elem_name</span><span class="o">.</span><span class="n">lower</span><span class="p">()]</span></div>
+
+
+<div class="viewcode-block" id="transistor_nr"><a class="viewcode-back" href="../../zlel.html#zlel.zlel_p3.transistor_nr">[docs]</a><span class="k">def</span> <span class="nf">transistor_nr</span><span class="p">(</span><span class="n">Ies</span><span class="p">,</span> <span class="n">Ics</span><span class="p">,</span> <span class="n">Vbej</span><span class="p">,</span> <span class="n">Vbcj</span><span class="p">,</span> <span class="n">alphaR</span><span class="p">,</span> <span class="n">alphaF</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This function returns g matrix values for the transistor equations for the next step,</span>
+<span class="sd">    ass well as Ebers-Moll currents for inhomogeneous term.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        Ies: Value of Ies.</span>
+<span class="sd">        Ics: Value of Ics.</span>
+<span class="sd">        Vbej: Value of Vbe.</span>
+<span class="sd">        Vbcj: Value of Vbc.</span>
+<span class="sd">        alphaR: Value of alphaR.</span>
+<span class="sd">        alphaF: Value of alphaF.</span>
+<span class="sd">        nVt: Value of n*Vt.</span>
+
+<span class="sd">    Return:</span>
+<span class="sd">        g: size 4 tuple containing transistors equations variation coefficients</span>
+<span class="sd">            g11, g12, g21, g22.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">nVt</span> <span class="o">=</span> <span class="n">n</span> <span class="o">*</span> <span class="mf">8.6173324e-5</span> <span class="o">*</span> <span class="mi">300</span>
+
+    <span class="n">g11</span> <span class="o">=</span>  <span class="n">Ies</span> <span class="o">/</span> <span class="n">nVt</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">Vbej</span> <span class="o">/</span> <span class="n">nVt</span><span class="p">)</span>
+    <span class="n">g22</span> <span class="o">=</span>  <span class="n">Ics</span> <span class="o">/</span> <span class="n">nVt</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">Vbcj</span> <span class="o">/</span> <span class="n">nVt</span><span class="p">)</span>
+    <span class="n">g12</span> <span class="o">=</span> <span class="o">-</span><span class="n">alphaR</span> <span class="o">*</span> <span class="n">g22</span>
+    <span class="n">g21</span> <span class="o">=</span> <span class="o">-</span><span class="n">alphaF</span> <span class="o">*</span> <span class="n">g11</span>
+
+    <span class="k">return</span> <span class="n">g11</span><span class="p">,</span> <span class="n">g12</span><span class="p">,</span> <span class="n">g21</span><span class="p">,</span> <span class="n">g22</span></div>
+
+
+<div class="viewcode-block" id="ebers_moll_currents"><a class="viewcode-back" href="../../zlel.html#zlel.zlel_p3.ebers_moll_currents">[docs]</a><span class="k">def</span> <span class="nf">ebers_moll_currents</span><span class="p">(</span><span class="n">Ies</span><span class="p">,</span> <span class="n">Ics</span><span class="p">,</span> <span class="n">Vbej</span><span class="p">,</span> <span class="n">Vbcj</span><span class="p">,</span> <span class="n">alphaR</span><span class="p">,</span> <span class="n">alphaF</span><span class="p">,</span> <span class="n">g11</span><span class="p">,</span> <span class="n">g12</span><span class="p">,</span> <span class="n">g21</span><span class="p">,</span> <span class="n">g22</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This function returns the current values of Ebers-Moll currents.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        Ies: Value of Ies</span>
+<span class="sd">        Ics: Value of Ics</span>
+<span class="sd">        Vbej: Value of Vbe</span>
+<span class="sd">        Vbcj: Value of Vbc</span>
+<span class="sd">        alphaR: Value of alphaR</span>
+<span class="sd">        alphaF: Value of alphaF</span>
+<span class="sd">        nVt: Value of n*Vt</span>
+
+<span class="sd">    Return:</span>
+<span class="sd">        ebmoIe: current Ebers-Moll Ie current</span>
+<span class="sd">        ebmoIc: current Ebers-Moll Ic current</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">nVt</span> <span class="o">=</span> <span class="n">n</span> <span class="o">*</span> <span class="mf">8.6173324e-5</span> <span class="o">*</span> <span class="mi">300</span>
+
+    <span class="n">ebmoIe</span> <span class="o">=</span> <span class="o">-</span><span class="n">g11</span><span class="o">*</span><span class="n">Vbej</span><span class="o">-</span><span class="n">g12</span><span class="o">*</span><span class="n">Vbcj</span><span class="o">+</span><span class="n">Ies</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">Vbej</span> <span class="o">/</span> <span class="n">nVt</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="n">alphaR</span> <span class="o">*</span> <span class="n">Ics</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">Vbcj</span> <span class="o">/</span> <span class="n">nVt</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">ebmoIc</span> <span class="o">=</span> <span class="o">-</span><span class="n">g21</span><span class="o">*</span><span class="n">Vbej</span><span class="o">-</span><span class="n">g22</span><span class="o">*</span><span class="n">Vbcj</span><span class="o">-</span> <span class="n">alphaF</span> <span class="o">*</span> <span class="n">Ies</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">Vbej</span> <span class="o">/</span> <span class="n">nVt</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">Ics</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">Vbcj</span> <span class="o">/</span> <span class="n">nVt</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">ebmoIe</span><span class="p">,</span> <span class="n">ebmoIc</span></div>
+
+
+<div class="viewcode-block" id="update_transistor_par"><a class="viewcode-back" href="../../zlel.html#zlel.zlel_p3.update_transistor_par">[docs]</a><span class="k">def</span> <span class="nf">update_transistor_par</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">Vbej</span><span class="p">,</span> <span class="n">Vbcj</span><span class="p">,</span> <span class="n">br_name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This function updates the values for the NR parameters of the given transistor.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        info: dict containing all circuit info.</span>
+<span class="sd">        Vdj: current value for Vd.</span>
+<span class="sd">        br_name: name of one of the element&#39;s branch, whose parameters will be updated.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;br&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">br_name</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># getting index from np.array</span>
+    <span class="n">Ies</span> <span class="o">=</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;br_val&quot;</span><span class="p">][</span><span class="n">ind</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">Ics</span> <span class="o">=</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;br_val&quot;</span><span class="p">][</span><span class="n">ind</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">beta</span> <span class="o">=</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;br_val&quot;</span><span class="p">][</span><span class="n">ind</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">alphaF</span> <span class="o">=</span> <span class="n">beta</span> <span class="o">/</span> <span class="p">(</span><span class="n">beta</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">alphaR</span> <span class="o">=</span> <span class="n">Ies</span> <span class="o">/</span> <span class="n">Ics</span> <span class="o">*</span> <span class="n">alphaF</span>
+
+    <span class="n">g11</span><span class="p">,</span> <span class="n">g12</span><span class="p">,</span> <span class="n">g21</span><span class="p">,</span> <span class="n">g22</span> <span class="o">=</span> <span class="n">transistor_nr</span><span class="p">(</span><span class="n">Ies</span><span class="p">,</span> <span class="n">Ics</span><span class="p">,</span> <span class="n">Vbej</span><span class="p">,</span> <span class="n">Vbcj</span><span class="p">,</span> <span class="n">alphaR</span><span class="p">,</span> <span class="n">alphaF</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">ebmoIe</span><span class="p">,</span> <span class="n">ebmoIc</span> <span class="o">=</span> <span class="n">ebers_moll_currents</span><span class="p">(</span><span class="n">Ies</span><span class="p">,</span> <span class="n">Ics</span><span class="p">,</span> <span class="n">Vbej</span><span class="p">,</span> <span class="n">Vbcj</span><span class="p">,</span> <span class="n">alphaR</span><span class="p">,</span> <span class="n">alphaF</span><span class="p">,</span> <span class="n">g11</span><span class="p">,</span> <span class="n">g12</span><span class="p">,</span> <span class="n">g21</span><span class="p">,</span> <span class="n">g22</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">q_parameters</span><span class="p">[</span><span class="n">br_name</span><span class="p">[:</span><span class="o">-</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()]</span> <span class="o">=</span> <span class="p">[</span><span class="n">g11</span><span class="p">,</span> <span class="n">g12</span><span class="p">,</span> <span class="n">g21</span><span class="p">,</span> <span class="n">g22</span><span class="p">,</span> <span class="n">ebmoIe</span><span class="p">,</span> <span class="n">ebmoIc</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="get_q_par"><a class="viewcode-back" href="../../zlel.html#zlel.zlel_p3.get_q_par">[docs]</a><span class="k">def</span> <span class="nf">get_q_par</span><span class="p">(</span><span class="n">elem_name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This function returns the list of parameters of the given transistor.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        elem_name: transistor element name.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        list of transistor NR parameters.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">q_parameters</span><span class="p">[</span><span class="n">elem_name</span><span class="o">.</span><span class="n">lower</span><span class="p">()]</span></div>
+
+
+<div class="viewcode-block" id="update_all_nl_par"><a class="viewcode-back" href="../../zlel.html#zlel.zlel_p3.update_all_nl_par">[docs]</a><span class="k">def</span> <span class="nf">update_all_nl_par</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">tableau_sol</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This function updates all the parameters of every diode and transistor.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        info: dict containing all circuit info.</span>
+<span class="sd">        tableau_sol: np.array containing the last solution of Tableau equations&#39; system.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;nd&quot;</span><span class="p">])</span>
+    <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;br&quot;</span><span class="p">])):</span>
+        <span class="n">br</span> <span class="o">=</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;br&quot;</span><span class="p">][</span><span class="n">ind</span><span class="p">]</span>
+        <span class="n">br</span> <span class="o">=</span> <span class="n">br</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">br</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;d&quot;</span><span class="p">):</span>
+            <span class="n">vd</span> <span class="o">=</span> <span class="n">tableau_sol</span><span class="p">[</span><span class="n">n</span> <span class="o">+</span> <span class="n">ind</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">update_diode_par</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">vd</span><span class="p">,</span> <span class="n">br</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">br</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;q&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">br</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;_be&quot;</span><span class="p">):</span>  <span class="c1"># update once per element</span>
+            <span class="n">vbe</span> <span class="o">=</span> <span class="n">tableau_sol</span><span class="p">[</span><span class="n">n</span> <span class="o">+</span> <span class="n">ind</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">vbc</span> <span class="o">=</span> <span class="n">tableau_sol</span><span class="p">[</span><span class="n">n</span> <span class="o">+</span> <span class="n">ind</span><span class="p">]</span>
+            <span class="n">update_transistor_par</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">vbe</span><span class="p">,</span> <span class="n">vbc</span><span class="p">,</span> <span class="n">br</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="set_initial_nl_par"><a class="viewcode-back" href="../../zlel.html#zlel.zlel_p3.set_initial_nl_par">[docs]</a><span class="k">def</span> <span class="nf">set_initial_nl_par</span><span class="p">(</span><span class="n">info</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This function sets all the parameters of every diode and transistor</span>
+<span class="sd">        to their respective initial values.</span>
+
+<span class="sd">        Initial values are:</span>
+<span class="sd">        Diode: Vd0 = 0.6</span>
+<span class="sd">        Transistor: Vbe0 = 0.6 Vbc0 = 0.6</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        info: dict containing all circuit info.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Initial values for NR iterations</span>
+    <span class="n">vd0</span> <span class="o">=</span> <span class="n">vbe0</span> <span class="o">=</span> <span class="n">vbc0</span> <span class="o">=</span> <span class="mf">0.6</span>
+
+    <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;br&quot;</span><span class="p">])):</span>
+        <span class="n">br</span> <span class="o">=</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;br&quot;</span><span class="p">][</span><span class="n">ind</span><span class="p">]</span>
+        <span class="n">br</span> <span class="o">=</span> <span class="n">br</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">br</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;d&quot;</span><span class="p">):</span>
+            <span class="n">update_diode_par</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">vd0</span><span class="p">,</span> <span class="n">br</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">br</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;q&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">br</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;_be&quot;</span><span class="p">):</span>  <span class="c1"># update once per element</span>
+            <span class="n">update_transistor_par</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">vbe0</span><span class="p">,</span> <span class="n">vbc0</span><span class="p">,</span> <span class="n">br</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="is_linear"><a class="viewcode-back" href="../../zlel.html#zlel.zlel_p3.is_linear">[docs]</a><span class="k">def</span> <span class="nf">is_linear</span><span class="p">(</span><span class="n">info</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This function checks the presence of diode and transistors</span>
+<span class="sd">        (non-linear elements) in the circuit.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        info: dict containing all circuit info.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        bool: True if circuit has no diode or transistors.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">br</span> <span class="ow">in</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;br&quot;</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">br</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;d&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">br</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;q&quot;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="solve_nl_circuit_in_time"><a class="viewcode-back" href="../../zlel.html#zlel.zlel_p3.solve_nl_circuit_in_time">[docs]</a><span class="k">def</span> <span class="nf">solve_nl_circuit_in_time</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Solves non-linear circuit in given time.</span>
+<span class="sd">        -1 means time independent, amplitudes of B and Y will be used instead.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        info: dict containing all circuit info.</span>
+<span class="sd">        t: time in seconds.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        sol: np.array of size 2b+(n-1), solution for all circuit variables (e, v, i).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">nr_method</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="n">t</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="nr_method"><a class="viewcode-back" href="../../zlel.html#zlel.zlel_p3.nr_method">[docs]</a><span class="k">def</span> <span class="nf">nr_method</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">precision</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">,</span> <span class="n">t</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Applies Newton-Raphson method to solve non-linear circuit</span>
+<span class="sd">        in given time with given convergence precision.</span>
+<span class="sd">        -1 means time independent, amplitudes of B and Y will be used instead.</span>
+<span class="sd">        Default precision: 1e-5</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        info: dict containing all circuit info.</span>
+<span class="sd">        t: time in seconds.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        sol: np.array of size(1,2b+(n-1)), solution for all circuit variables (e, v, i).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">zl2</span><span class="o">.</span><span class="n">get_reduced_incidence_matrix</span><span class="p">(</span><span class="n">info</span><span class="p">)</span>
+    <span class="n">set_initial_nl_par</span><span class="p">(</span><span class="n">info</span><span class="p">)</span>
+    <span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">u</span> <span class="o">=</span> <span class="n">zl2</span><span class="o">.</span><span class="n">get_element_matrices</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+    <span class="n">tableau_t</span><span class="p">,</span> <span class="n">tableau_u</span> <span class="o">=</span> <span class="n">zl2</span><span class="o">.</span><span class="n">build_tableau_system</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">u</span><span class="p">)</span>
+    <span class="n">sol</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">tableau_t</span><span class="p">,</span> <span class="n">tableau_u</span><span class="p">)</span>
+    <span class="n">pr</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">while</span> <span class="ow">not</span> <span class="n">pr</span><span class="p">:</span>
+        
+        <span class="n">prev_sol</span> <span class="o">=</span> <span class="n">sol</span>
+        <span class="n">update_all_nl_par</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">prev_sol</span><span class="p">)</span>
+        <span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">u</span> <span class="o">=</span> <span class="n">zl2</span><span class="o">.</span><span class="n">get_element_matrices</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+        <span class="n">tableau_t</span><span class="p">,</span> <span class="n">tableau_u</span> <span class="o">=</span> <span class="n">zl2</span><span class="o">.</span><span class="n">build_tableau_system</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">u</span><span class="p">)</span>
+        <span class="n">sol</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">tableau_t</span><span class="p">,</span> <span class="n">tableau_u</span><span class="p">)</span>
+        <span class="n">pr</span> <span class="o">=</span> <span class="n">check_precision</span><span class="p">(</span><span class="n">sol</span><span class="p">,</span> <span class="n">prev_sol</span><span class="p">,</span> <span class="n">precision</span><span class="p">)</span>
+       
+    <span class="k">return</span> <span class="n">sol</span></div>
+
+
+<div class="viewcode-block" id="check_precision"><a class="viewcode-back" href="../../zlel.html#zlel.zlel_p3.check_precision">[docs]</a><span class="k">def</span> <span class="nf">check_precision</span><span class="p">(</span><span class="n">sol</span><span class="p">,</span> <span class="n">prev_sol</span><span class="p">,</span> <span class="n">precision</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This function compares 2 consecutive solutions of Tableau equation system</span>
+<span class="sd">        to check convergence precision. It return whether precision is correct.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        sol: current solution of Tableau equation system.</span>
+<span class="sd">        prev_sol: previous solution of Tableau equation system.</span>
+<span class="sd">        precision: requested convergence precision.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        bool: True if solution is accurate and convergent.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">sol</span><span class="p">)):</span>
+        <span class="c1"># print(sol-prev_sol)</span>
+        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">sol</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">-</span> <span class="n">prev_sol</span><span class="p">[</span><span class="n">ind</span><span class="p">])</span> <span class="o">&gt;</span> <span class="n">precision</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<span class="sd">&quot;&quot;&quot;   </span>
+<span class="sd">https://stackoverflow.com/questions/419163/what-does-if-name-main-do</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="s2">&quot;../cirs/all/2_zlel_Q_ezaugarri.cir&quot;</span>
+
+    <span class="n">cir_info</span> <span class="o">=</span> <span class="n">zl2</span><span class="o">.</span><span class="n">process_circuit</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+    <span class="n">zl2</span><span class="o">.</span><span class="n">run_commands</span><span class="p">(</span><span class="n">cir_info</span><span class="p">)</span>
+    
+    <span class="n">end</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+    <span class="c1"># print(&quot;Elapsed time: &quot;)</span>
+    <span class="c1"># print(end - start)  # Time in seconds</span>
+    
+    
+    
+    
+
+
+
+
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">ZLEL</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Mikel Elorza (mikelelorza0327@gmail.com), Egoitz Gonzalez (egoitz.gonz@gmail.com).
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
