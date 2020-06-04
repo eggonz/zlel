@@ -1,0 +1,191 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>zlel.zlel_p4 &#8212; ZLEL 0.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for zlel.zlel_p4</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">.. module:: zlel_p4.py</span>
+<span class="sd">    :synopsis:</span>
+<span class="sd">        This module adds a method to solve dynamic systems, by time discretization.</span>
+<span class="sd"> </span>
+<span class="sd">.. moduleauthor:: Mikel Elorza (mikelelorza0327@gmail.com), Egoitz Gonzalez (egoitz.gonz@gmail.com)</span>
+
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;zlel.zlel_p4&quot;</span> <span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">zlel.zlel_p2</span> <span class="k">as</span> <span class="nn">zl2</span>
+    
+<span class="k">else</span> <span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">zlel_p2</span> <span class="k">as</span> <span class="nn">zl2</span>
+
+<span class="n">v_aurreko</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">i_aurreko</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">tau</span> <span class="o">=</span> <span class="kc">None</span>
+
+
+<div class="viewcode-block" id="update_state"><a class="viewcode-back" href="../../zlel.html#zlel.zlel_p4.update_state">[docs]</a><span class="k">def</span> <span class="nf">update_state</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">sol</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; This function updates relevant values of the previous solution to </span>
+<span class="sd">    execute the Euler method.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            sol: np array with the solution of the Tableau equations</span>
+<span class="sd">            (e_1,..,e_n-1,v_1,..,v_b,i_1,..i_b)</span>
+<span class="sd">            info: dict containing all circuit info</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;nd&quot;</span><span class="p">])</span>
+    <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;br&quot;</span><span class="p">])):</span>
+        <span class="n">elem</span> <span class="o">=</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;br&quot;</span><span class="p">][</span><span class="n">ind</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">elem</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;c&quot;</span><span class="p">):</span>
+            <span class="n">v_aurreko</span><span class="p">[</span><span class="n">elem</span><span class="p">]</span> <span class="o">=</span> <span class="n">sol</span><span class="p">[</span><span class="n">n</span><span class="o">+</span><span class="n">ind</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">elem</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;l&quot;</span><span class="p">):</span>
+            <span class="n">i_aurreko</span><span class="p">[</span><span class="n">elem</span><span class="p">]</span> <span class="o">=</span> <span class="n">sol</span><span class="p">[</span><span class="n">n</span><span class="o">+</span><span class="nb">len</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;br&quot;</span><span class="p">])</span><span class="o">+</span><span class="n">ind</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="initialize"><a class="viewcode-back" href="../../zlel.html#zlel.zlel_p4.initialize">[docs]</a><span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">step</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; This function initializes relevant values of to execute Euler method.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            step: time step for the discrretization</span>
+<span class="sd">            info: dict containing all circuit info</span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">global</span> <span class="n">tau</span>
+    <span class="n">tau</span> <span class="o">=</span> <span class="n">step</span>
+    <span class="n">br</span> <span class="o">=</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;br&quot;</span><span class="p">]</span>
+    <span class="n">br_val</span> <span class="o">=</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;br_val&quot;</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">br</span><span class="p">)):</span>
+        <span class="n">branch</span> <span class="o">=</span> <span class="n">br</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">branch</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;c&quot;</span><span class="p">):</span>
+            <span class="n">v_aurreko</span><span class="p">[</span><span class="n">branch</span><span class="p">]</span> <span class="o">=</span> <span class="n">br_val</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">branch</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;l&quot;</span><span class="p">):</span>
+            <span class="n">i_aurreko</span><span class="p">[</span><span class="n">branch</span><span class="p">]</span> <span class="o">=</span> <span class="n">br_val</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="is_dynamic"><a class="viewcode-back" href="../../zlel.html#zlel.zlel_p4.is_dynamic">[docs]</a><span class="k">def</span> <span class="nf">is_dynamic</span><span class="p">(</span><span class="n">info</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; This function checks whether the circuit is dynamic or not.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            info: dict containing all circuit info</span>
+<span class="sd">            </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            bool: True if circuit has capacitors or inductors.</span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">br</span> <span class="ow">in</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;br&quot;</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">br</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;c&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">br</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;l&quot;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">return</span> <span class="kc">False</span></div>
+
+    
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="s2">&quot;../cirs/all/3_zlel_RC.cir&quot;</span>
+
+    <span class="n">cir_info</span> <span class="o">=</span> <span class="n">zl2</span><span class="o">.</span><span class="n">process_circuit</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+    <span class="n">zl2</span><span class="o">.</span><span class="n">run_commands</span><span class="p">(</span><span class="n">cir_info</span><span class="p">)</span>
+    
+    <span class="n">end</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+    <span class="c1"># print(&quot;Elapsed time: &quot;)</span>
+    <span class="c1"># print(end - start)  # Time in seconds</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">ZLEL</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Mikel Elorza (mikelelorza0327@gmail.com), Egoitz Gonzalez (egoitz.gonz@gmail.com).
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

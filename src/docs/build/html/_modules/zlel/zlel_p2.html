@@ -1,0 +1,643 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>zlel.zlel_p2 &#8212; ZLEL 0.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for zlel.zlel_p2</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">.. module:: zlel_main.py0</span>
+<span class="sd">    :synopsis:</span>
+<span class="sd">        This module contains functions to read, manage and solve circuits.</span>
+<span class="sd"> </span>
+<span class="sd">.. moduleauthor:: Mikel Elorza (mikelelorza0327@gmail.com), Egoitz Gonzalez (egoitz.gonz@gmail.com)</span>
+
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span> 
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;zlel.zlel_p2&quot;</span> <span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">zlel.zlel_p1</span> <span class="k">as</span> <span class="nn">zl1</span>
+    <span class="kn">import</span> <span class="nn">zlel.zlel_p3</span> <span class="k">as</span> <span class="nn">zl3</span>
+    <span class="kn">import</span> <span class="nn">zlel.zlel_p4</span> <span class="k">as</span> <span class="nn">zl4</span>
+<span class="k">else</span> <span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">zlel_p1</span> <span class="k">as</span> <span class="nn">zl1</span>
+    <span class="kn">import</span> <span class="nn">zlel_p3</span> <span class="k">as</span> <span class="nn">zl3</span>
+    <span class="kn">import</span> <span class="nn">zlel_p4</span> <span class="k">as</span> <span class="nn">zl4</span>
+
+
+<div class="viewcode-block" id="print_solution2"><a class="viewcode-back" href="../../zlel.html#zlel.zlel_p2.print_solution2">[docs]</a><span class="k">def</span> <span class="nf">print_solution2</span><span class="p">(</span><span class="n">sol</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; This function prints the solution with format.</span>
+<span class="sd">    </span>
+<span class="sd">        Args:</span>
+<span class="sd">            sol: np array with the solution of the Tableau equations </span>
+<span class="sd">            (e_1,..,e_n-1,v_1,..,v_b,i_1,..i_b)</span>
+<span class="sd">            b: # of branches</span>
+<span class="sd">            n: # of nodes</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">set_printoptions</span><span class="p">(</span><span class="n">sign</span><span class="o">=</span><span class="s1">&#39; &#39;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">========== Nodes voltage to reference ========&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+        <span class="c1"># print(&quot;e&quot; + str(i) + &quot; = &quot;, &#39;[&#39;+&#39;,&#39;.join([&#39;% .8f&#39; % num for num in sol[i-1]])+&#39;]&#39;)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;e&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; = &quot;</span><span class="p">,</span> <span class="n">sol</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">========== Branches voltage difference ========&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">b</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+        <span class="c1"># print(&quot;v&quot; + str(i) + &quot; = &quot;, &#39;[&#39;+&#39;,&#39;.join([&#39;% .8f&#39; % num for num in sol[i+n-2]])+&#39;]&#39;)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;v&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; = &quot;</span><span class="p">,</span> <span class="n">sol</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="n">n</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">=============== Branches currents ==============&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">b</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+        <span class="c1"># print(&quot;i&quot; + str(i) + &quot; = &quot;, &#39;[&#39;+&#39;,&#39;.join([&#39;% .8f&#39; % num for num in sol[i+b+n-2]])+&#39;]&#39;)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;i&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; = &quot;</span><span class="p">,</span> <span class="n">sol</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="n">b</span><span class="o">+</span><span class="n">n</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span>
+        
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">================= End solution =================</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="print_solution"><a class="viewcode-back" href="../../zlel.html#zlel.zlel_p2.print_solution">[docs]</a><span class="k">def</span> <span class="nf">print_solution</span><span class="p">(</span><span class="n">sol</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; This function prints the solution with format.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            sol: np array with the solution of the Tableau equations</span>
+<span class="sd">            (e_1,..,e_n-1,v_1,..,v_b,i_1,..i_b)</span>
+<span class="sd">            b: # of branches</span>
+<span class="sd">            n: # of nodes</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># The instructor solution needs to be a numpy array of numpy arrays</span>
+    <span class="c1"># of float. If it is not, convert it to this format.</span>
+    <span class="k">if</span> <span class="n">sol</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">:</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">set_printoptions</span><span class="p">(</span><span class="n">sign</span><span class="o">=</span><span class="s1">&#39; &#39;</span><span class="p">)</span>  <span class="c1"># Only from numpy 1.14</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">sol</span><span class="p">),</span> <span class="mi">1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">sol</span><span class="p">)):</span>
+            <span class="n">tmp</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">sol</span><span class="p">[</span><span class="n">ind</span><span class="p">])</span>
+        <span class="n">sol</span> <span class="o">=</span> <span class="n">tmp</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">========== Nodes voltage to reference ========&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;e&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; = &quot;</span><span class="p">,</span> <span class="n">sol</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">========== Branches voltage difference ========&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">b</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;v&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; = &quot;</span><span class="p">,</span> <span class="n">sol</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">2</span><span class="p">])</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">=============== Branches currents ==============&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">b</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;i&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; = &quot;</span><span class="p">,</span> <span class="n">sol</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="n">b</span> <span class="o">+</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">2</span><span class="p">])</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">================= End solution =================</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div>
+    
+
+<div class="viewcode-block" id="build_csv_header"><a class="viewcode-back" href="../../zlel.html#zlel.zlel_p2.build_csv_header">[docs]</a><span class="k">def</span> <span class="nf">build_csv_header</span><span class="p">(</span><span class="n">tvi</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; This function build the csv header for the output files.</span>
+<span class="sd">        First column will be v or i if .dc analysis or t if .tr and it will</span>
+<span class="sd">        be given by argument tvi.</span>
+<span class="sd">        The header will be this form,</span>
+<span class="sd">        t/v/i,e_1,..,e_n-1,v_1,..,v_b,i_1,..i_b</span>
+<span class="sd">        </span>
+<span class="sd">    Args:</span>
+<span class="sd">        tvi: &quot;v&quot; or &quot;i&quot; if .dc analysis or &quot;t&quot; if .tran</span>
+<span class="sd">        b: # of branches</span>
+<span class="sd">        n: # of nodes</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        header: The header in csv format as string</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">header</span> <span class="o">=</span> <span class="n">tvi</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+        <span class="n">header</span> <span class="o">+=</span> <span class="s2">&quot;,e&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">b</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+        <span class="n">header</span> <span class="o">+=</span> <span class="s2">&quot;,v&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">b</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+        <span class="n">header</span> <span class="o">+=</span> <span class="s2">&quot;,i&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">header</span></div>
+
+
+<div class="viewcode-block" id="plot_from_cvs"><a class="viewcode-back" href="../../zlel.html#zlel.zlel_p2.plot_from_cvs">[docs]</a><span class="k">def</span> <span class="nf">plot_from_cvs</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">title</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; This function plots the values corresponding to the x string of the </span>
+<span class="sd">        file filename in the x-axis and the ones corresponding to the y </span>
+<span class="sd">        string in the y-axis.</span>
+<span class="sd">        The x and y strings must mach with some value of the header in the</span>
+<span class="sd">        csv file filename.</span>
+<span class="sd">        </span>
+<span class="sd">    Args:</span>
+<span class="sd">        filename: string with the name of the file (including the path).</span>
+<span class="sd">        x: string with some value of the header of the file.</span>
+<span class="sd">        y: string with some value of the header of the file.</span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">genfromtxt</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="s1">&#39;,&#39;</span><span class="p">,</span> <span class="n">skip_header</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                         <span class="n">skip_footer</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+    <span class="n">ax1</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">x</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="n">y</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">title</span><span class="p">)</span>   
+    <span class="n">ax1</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="command_pr"><a class="viewcode-back" href="../../zlel.html#zlel.zlel_p2.command_pr">[docs]</a><span class="k">def</span> <span class="nf">command_pr</span><span class="p">(</span><span class="n">info</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Function called with command .PR.</span>
+<span class="sd">        It prints the circuit info.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        info: dict containing all circuit info</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">elem_num</span><span class="p">,</span> <span class="n">br</span><span class="p">,</span> <span class="n">br_nd</span><span class="p">,</span> <span class="n">nd</span> <span class="o">=</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;elem_num&quot;</span><span class="p">],</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;br&quot;</span><span class="p">],</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;br_nd&quot;</span><span class="p">],</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;nd&quot;</span><span class="p">]</span>
+    <span class="n">zl1</span><span class="o">.</span><span class="n">print_cir_info</span><span class="p">(</span><span class="n">br</span><span class="p">,</span> <span class="n">br_nd</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">br</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">nd</span><span class="p">),</span> <span class="n">nd</span><span class="p">,</span> <span class="n">elem_num</span><span class="p">)</span>
+    <span class="n">zl1</span><span class="o">.</span><span class="n">print_incidence_matrix</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;incidence_mat&quot;</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="command_op"><a class="viewcode-back" href="../../zlel.html#zlel.zlel_p2.command_op">[docs]</a><span class="k">def</span> <span class="nf">command_op</span><span class="p">(</span><span class="n">info</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Function called with command .OP.</span>
+<span class="sd">        It solves the given circuit via Tableau equations.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        info: dict containing all circuit info</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+
+    <span class="n">sol</span> <span class="o">=</span> <span class="n">solve_circuit_in_time</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+    <span class="n">print_solution</span><span class="p">(</span><span class="n">sol</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;br&quot;</span><span class="p">]),</span> <span class="nb">len</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;nd&quot;</span><span class="p">]))</span></div>
+
+
+<div class="viewcode-block" id="build_tableau_system"><a class="viewcode-back" href="../../zlel.html#zlel.zlel_p2.build_tableau_system">[docs]</a><span class="k">def</span> <span class="nf">build_tableau_system</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">u</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This function takes a, m and n matrices and u vector and uses them to</span>
+<span class="sd">        build the linear system that corresponds to Tableau equations.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        a: reduced incidence matrix.</span>
+<span class="sd">        m: voltage coefficient matrix</span>
+<span class="sd">        n: current coefficient matrix</span>
+<span class="sd">        u: independent terms vector</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        T: Tableau matrix.</span>
+<span class="sd">        U: Tableau inhomogeneous vector.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">a0</span><span class="p">,</span> <span class="n">a1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">m0</span><span class="p">,</span> <span class="n">m1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">tableau_t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">a0</span> <span class="o">+</span> <span class="n">a1</span> <span class="o">+</span> <span class="n">m0</span><span class="p">,</span> <span class="n">a0</span> <span class="o">+</span> <span class="n">m1</span> <span class="o">+</span> <span class="n">a1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">tableau_u</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">a0</span> <span class="o">+</span> <span class="n">a1</span> <span class="o">+</span> <span class="n">m0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+
+    <span class="n">tableau_t</span><span class="p">[:</span><span class="n">a0</span><span class="p">,</span> <span class="o">-</span><span class="n">a1</span><span class="p">:]</span> <span class="o">=</span> <span class="n">a</span>
+    <span class="n">tableau_t</span><span class="p">[</span><span class="n">a0</span><span class="p">:</span><span class="o">-</span><span class="n">m0</span><span class="p">,</span> <span class="p">:</span><span class="n">a0</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+    <span class="n">tableau_t</span><span class="p">[</span><span class="n">a0</span><span class="p">:</span><span class="o">-</span><span class="n">m0</span><span class="p">,</span> <span class="n">a0</span><span class="p">:</span><span class="o">-</span><span class="n">a1</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">m1</span><span class="p">)</span>
+    <span class="n">tableau_t</span><span class="p">[</span><span class="o">-</span><span class="n">m0</span><span class="p">:,</span> <span class="n">a0</span><span class="p">:</span><span class="o">-</span><span class="n">a1</span><span class="p">]</span> <span class="o">=</span> <span class="n">m</span>
+    <span class="n">tableau_t</span><span class="p">[</span><span class="o">-</span><span class="n">m0</span><span class="p">:,</span> <span class="o">-</span><span class="n">a1</span><span class="p">:]</span> <span class="o">=</span> <span class="n">n</span>
+    <span class="n">tableau_u</span><span class="p">[</span><span class="o">-</span><span class="n">m0</span><span class="p">:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">tableau_t</span><span class="p">,</span> <span class="n">tableau_u</span></div>
+
+
+<div class="viewcode-block" id="solve_circuit_in_time"><a class="viewcode-back" href="../../zlel.html#zlel.zlel_p2.solve_circuit_in_time">[docs]</a><span class="k">def</span> <span class="nf">solve_circuit_in_time</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Solves circuit in given time.</span>
+<span class="sd">        -1 means time independent, amplitudes of B and Y will be used instead.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        info: dict containing all circuit info</span>
+<span class="sd">        t: time in seconds</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        sol: np.array of size 2b+(n-1), solution for all circuit variables (e, v, i)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">zl3</span><span class="o">.</span><span class="n">is_linear</span><span class="p">(</span><span class="n">info</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">zl3</span><span class="o">.</span><span class="n">solve_nl_circuit_in_time</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+        
+    <span class="n">a</span> <span class="o">=</span> <span class="n">get_reduced_incidence_matrix</span><span class="p">(</span><span class="n">info</span><span class="p">)</span>
+    <span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">u</span> <span class="o">=</span> <span class="n">get_element_matrices</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+    <span class="n">tableau_t</span><span class="p">,</span> <span class="n">tableau_u</span> <span class="o">=</span> <span class="n">build_tableau_system</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">u</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">det</span><span class="p">(</span><span class="n">tableau_t</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">det</span><span class="p">(</span><span class="n">tableau_t</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="s2">&quot;Error solving Tableau equations, check if det(T) != 0.&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">tableau_t</span><span class="p">,</span> <span class="n">tableau_u</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="command_dc"><a class="viewcode-back" href="../../zlel.html#zlel.zlel_p2.command_dc">[docs]</a><span class="k">def</span> <span class="nf">command_dc</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">control</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Function called with command .DC.</span>
+<span class="sd">        Saves dc sweep data into csv file with same filename.</span>
+<span class="sd">        </span>
+<span class="sd">    Args:</span>
+<span class="sd">        info: dict containing all circuit info</span>
+<span class="sd">        values: value info for command, np.array size(3)</span>
+<span class="sd">        control: control element identifier, np.array size(1)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">step</span> <span class="o">=</span> <span class="n">values</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+
+    <span class="n">file_name</span> <span class="o">=</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;file_name&quot;</span><span class="p">][:</span><span class="o">-</span><span class="mi">4</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;_&quot;</span> <span class="o">+</span> <span class="n">control</span> <span class="o">+</span> <span class="s2">&quot;.dc&quot;</span>  <span class="c1"># TODO lower</span>
+    <span class="n">header</span> <span class="o">=</span> <span class="n">build_csv_header</span><span class="p">(</span><span class="s2">&quot;V&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;br&quot;</span><span class="p">]),</span> <span class="nb">len</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;nd&quot;</span><span class="p">]))</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_name</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+
+        <span class="n">v</span> <span class="o">=</span> <span class="n">start</span>
+        <span class="k">while</span> <span class="n">v</span> <span class="o">&lt;</span> <span class="n">end</span><span class="p">:</span>
+            <span class="n">change_value_of_elem</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">control</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+            <span class="n">sol</span> <span class="o">=</span> <span class="n">solve_circuit_in_time</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+
+            <span class="c1"># write in csv</span>
+            <span class="n">sol</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">sol</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+            <span class="c1"># sol to csv</span>
+            <span class="n">sol_csv</span> <span class="o">=</span> <span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s1">&#39;</span><span class="si">%.5f</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">num</span> <span class="k">for</span> <span class="n">num</span> <span class="ow">in</span> <span class="n">sol</span><span class="p">])</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">sol_csv</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+
+            <span class="n">v</span> <span class="o">+=</span> <span class="n">step</span></div>
+
+
+<div class="viewcode-block" id="change_value_of_elem"><a class="viewcode-back" href="../../zlel.html#zlel.zlel_p2.change_value_of_elem">[docs]</a><span class="k">def</span> <span class="nf">change_value_of_elem</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">elem_name</span><span class="p">,</span> <span class="n">new_value</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Changes the value of the selected element.</span>
+<span class="sd">        Element must consist of a single branch and have a single value.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">         info: dict containing all circuit info</span>
+<span class="sd">         elem_name: element name</span>
+<span class="sd">         new_value: new value, which will override the previous</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">br_lower</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;br&quot;</span><span class="p">])))</span>
+    <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">(</span><span class="n">br_lower</span> <span class="o">==</span> <span class="n">elem_name</span><span class="o">.</span><span class="n">lower</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">info</span><span class="p">[</span><span class="s2">&quot;br_val&quot;</span><span class="p">][</span><span class="n">ind</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_value</span></div>
+
+
+<div class="viewcode-block" id="command_tr"><a class="viewcode-back" href="../../zlel.html#zlel.zlel_p2.command_tr">[docs]</a><span class="k">def</span> <span class="nf">command_tr</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Function called with command .TR.</span>
+<span class="sd">        Saves transient analysis data into csv file.</span>
+<span class="sd">        </span>
+<span class="sd">    Args:</span>
+<span class="sd">        info: dict containing all circuit info</span>
+<span class="sd">        values: value info for command, np.array size(3)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">step</span> <span class="o">=</span> <span class="n">values</span>
+   
+    <span class="n">file_name</span> <span class="o">=</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;file_name&quot;</span><span class="p">][:</span><span class="o">-</span><span class="mi">4</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;.tr&quot;</span>
+    <span class="n">header</span> <span class="o">=</span> <span class="n">build_csv_header</span><span class="p">(</span><span class="s2">&quot;t&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;br&quot;</span><span class="p">]),</span> <span class="nb">len</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;nd&quot;</span><span class="p">]))</span>
+
+    <span class="n">dynamic</span> <span class="o">=</span> <span class="n">zl4</span><span class="o">.</span><span class="n">is_dynamic</span><span class="p">(</span><span class="n">info</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_name</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">dynamic</span><span class="p">:</span>
+            <span class="n">zl4</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">step</span><span class="p">)</span>
+
+        <span class="n">t</span> <span class="o">=</span> <span class="n">start</span>
+        <span class="n">sol</span> <span class="o">=</span> <span class="n">solve_circuit_in_time</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+
+        <span class="c1"># write in csv</span>
+        <span class="n">sol_csv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">sol</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+        <span class="c1"># sol to csv</span>
+        <span class="n">sol_csv</span> <span class="o">=</span> <span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s1">&#39;</span><span class="si">%.9f</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">num</span> <span class="k">for</span> <span class="n">num</span> <span class="ow">in</span> <span class="n">sol_csv</span><span class="p">])</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">sol_csv</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+
+        <span class="k">while</span> <span class="n">t</span> <span class="o">&lt;</span> <span class="n">end</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">dynamic</span><span class="p">:</span>
+                <span class="n">zl4</span><span class="o">.</span><span class="n">update_state</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">sol</span><span class="p">)</span>
+
+            <span class="n">t</span> <span class="o">+=</span> <span class="n">step</span>
+            <span class="n">sol</span> <span class="o">=</span> <span class="n">solve_circuit_in_time</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+            
+            <span class="c1"># write in csv</span>
+            <span class="n">sol_csv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">sol</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+            <span class="c1"># sol to csv</span>
+            <span class="n">sol_csv</span> <span class="o">=</span> <span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s1">&#39;</span><span class="si">%.9f</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">num</span> <span class="k">for</span> <span class="n">num</span> <span class="ow">in</span> <span class="n">sol_csv</span><span class="p">])</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">sol_csv</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="process_circuit"><a class="viewcode-back" href="../../zlel.html#zlel.zlel_p2.process_circuit">[docs]</a><span class="k">def</span> <span class="nf">process_circuit</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This function parses and processes circuit info.</span>
+<span class="sd">        It must be called before doing anything else, as it defines all variables.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        filename: string with file relative path</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        info: dictionary containing all circuit info, contains following keys:</span>
+<span class="sd">            elem_num: # of elements in circuit</span>
+<span class="sd">            com_el: list of command names</span>
+<span class="sd">            com_val: list of values for each command</span>
+<span class="sd">            com_ctr: list of control elements for each command</span>
+<span class="sd">            br: list of branch names</span>
+<span class="sd">            br_nd: list of nodes for each branch</span>
+<span class="sd">            br_val: list of values for the element in each branch</span>
+<span class="sd">            br_ctr: list of control element for the element in each branch</span>
+<span class="sd">            nd: list of node names</span>
+<span class="sd">            incidence_mat: incidence matrix (nd x br)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Parse the circuit</span>
+    <span class="n">cir_el</span><span class="p">,</span> <span class="n">cir_nd</span><span class="p">,</span> <span class="n">cir_val</span><span class="p">,</span> <span class="n">cir_ctr</span> <span class="o">=</span> <span class="n">zl1</span><span class="o">.</span><span class="n">cir_parser</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+    <span class="c1"># cir_el = np.array(list(map(lambda x: x.lower(), cir_el)))</span>
+    <span class="c1"># cir_ctr = np.array(list(map(lambda x: x.lower(), cir_ctr)))</span>
+
+    <span class="c1"># Differentiate commands from elements in file</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">cir_el</span> <span class="k">if</span> <span class="n">elem</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">))</span>
+
+    <span class="n">com_el</span><span class="p">,</span> <span class="n">com_val</span><span class="p">,</span> <span class="n">com_ctr</span> <span class="o">=</span> \
+        <span class="n">cir_el</span><span class="p">[</span><span class="o">-</span><span class="n">n</span><span class="p">:],</span> <span class="n">cir_val</span><span class="p">[</span><span class="o">-</span><span class="n">n</span><span class="p">:],</span> <span class="n">cir_ctr</span><span class="p">[</span><span class="o">-</span><span class="n">n</span><span class="p">:]</span>
+
+    <span class="n">cir_el</span><span class="p">,</span> <span class="n">cir_nd</span><span class="p">,</span> <span class="n">cir_val</span><span class="p">,</span> <span class="n">cir_ctr</span> <span class="o">=</span> \
+        <span class="n">cir_el</span><span class="p">[:</span><span class="o">-</span><span class="n">n</span><span class="p">],</span> <span class="n">cir_nd</span><span class="p">[:</span><span class="o">-</span><span class="n">n</span><span class="p">],</span> <span class="n">cir_val</span><span class="p">[:</span><span class="o">-</span><span class="n">n</span><span class="p">],</span> <span class="n">cir_ctr</span><span class="p">[:</span><span class="o">-</span><span class="n">n</span><span class="p">]</span>
+
+    <span class="c1"># Identify branches and nodes</span>
+    <span class="n">br</span><span class="p">,</span> <span class="n">br_nd</span><span class="p">,</span> <span class="n">br_val</span><span class="p">,</span> <span class="n">br_ctr</span> <span class="o">=</span> <span class="n">zl1</span><span class="o">.</span><span class="n">span_branches</span><span class="p">(</span><span class="n">cir_el</span><span class="p">,</span> <span class="n">cir_nd</span><span class="p">,</span> <span class="n">cir_val</span><span class="p">,</span> <span class="n">cir_ctr</span><span class="p">)</span>
+    <span class="n">nd</span> <span class="o">=</span> <span class="n">zl1</span><span class="o">.</span><span class="n">node_set</span><span class="p">(</span><span class="n">cir_nd</span><span class="p">)</span>
+
+    <span class="n">incidence_mat</span> <span class="o">=</span> <span class="n">zl1</span><span class="o">.</span><span class="n">build_incidence_matrix</span><span class="p">(</span><span class="n">br</span><span class="p">,</span> <span class="n">br_nd</span><span class="p">,</span> <span class="n">nd</span><span class="p">)</span>
+
+    <span class="n">zl1</span><span class="o">.</span><span class="n">check_parallel_v</span><span class="p">(</span><span class="n">br</span><span class="p">,</span> <span class="n">br_val</span><span class="p">,</span> <span class="n">incidence_mat</span><span class="p">)</span>
+    <span class="n">zl1</span><span class="o">.</span><span class="n">check_serial_i</span><span class="p">(</span><span class="n">nd</span><span class="p">,</span> <span class="n">br</span><span class="p">,</span> <span class="n">br_val</span><span class="p">,</span> <span class="n">incidence_mat</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;file_name&quot;</span><span class="p">:</span> <span class="n">filename</span><span class="p">,</span>
+        <span class="s2">&quot;elem_num&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">cir_el</span><span class="p">),</span>
+        <span class="s2">&quot;com_el&quot;</span><span class="p">:</span> <span class="n">com_el</span><span class="p">,</span>
+        <span class="s2">&quot;com_val&quot;</span><span class="p">:</span> <span class="n">com_val</span><span class="p">,</span>
+        <span class="s2">&quot;com_ctr&quot;</span><span class="p">:</span> <span class="n">com_ctr</span><span class="p">,</span>
+        <span class="s2">&quot;br&quot;</span><span class="p">:</span> <span class="n">br</span><span class="p">,</span>
+        <span class="s2">&quot;br_nd&quot;</span><span class="p">:</span> <span class="n">br_nd</span><span class="p">,</span>
+        <span class="s2">&quot;br_val&quot;</span><span class="p">:</span> <span class="n">br_val</span><span class="p">,</span>
+        <span class="s2">&quot;br_ctr&quot;</span><span class="p">:</span> <span class="n">br_ctr</span><span class="p">,</span>
+        <span class="s2">&quot;nd&quot;</span><span class="p">:</span> <span class="n">nd</span><span class="p">,</span>
+        <span class="s2">&quot;incidence_mat&quot;</span><span class="p">:</span> <span class="n">incidence_mat</span>
+    <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="get_element_matrices"><a class="viewcode-back" href="../../zlel.html#zlel.zlel_p2.get_element_matrices">[docs]</a><span class="k">def</span> <span class="nf">get_element_matrices</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Given the element equations with the form &quot; M v + N i = u &quot;, this function builds</span>
+<span class="sd">        and returns matrices M and N and vector u.</span>
+<span class="sd">        t = -1 means time independent, amplitudes of B and Y will be used instead.</span>
+<span class="sd">        Diode and transistor branches (d and q) are empty, and must be filled afterwards.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        info: dictionary containing info of the current circuit</span>
+<span class="sd">        t: current time, for time dependent values/elements</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        M: voltage coefficient matrix</span>
+<span class="sd">        N: current coefficient matrix</span>
+<span class="sd">        u: independent terms vector</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">br</span><span class="p">,</span> <span class="n">br_nd</span><span class="p">,</span> <span class="n">br_val</span><span class="p">,</span> <span class="n">br_ctr</span><span class="p">,</span> <span class="n">nd</span> <span class="o">=</span>\
+        <span class="n">info</span><span class="p">[</span><span class="s2">&quot;br&quot;</span><span class="p">],</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;br_nd&quot;</span><span class="p">],</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;br_val&quot;</span><span class="p">],</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;br_ctr&quot;</span><span class="p">],</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;nd&quot;</span><span class="p">]</span>
+
+    <span class="n">m</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">br</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">br</span><span class="p">)),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">br</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">br</span><span class="p">)),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">u</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">br</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+
+    <span class="n">br_lower</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="n">br</span><span class="p">)))</span>
+
+    <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">br</span><span class="p">)):</span>
+        <span class="n">branch</span> <span class="o">=</span> <span class="n">br_lower</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">branch</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;v&quot;</span><span class="p">):</span>
+            <span class="n">m</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="n">u</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">br_val</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">elif</span> <span class="n">branch</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;i&quot;</span><span class="p">):</span>
+            <span class="n">n</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="n">u</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">br_val</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">elif</span> <span class="n">branch</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;r&quot;</span><span class="p">):</span>
+            <span class="n">m</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="n">n</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">br_val</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">elif</span> <span class="n">branch</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;d&quot;</span><span class="p">):</span>
+            <span class="n">elem</span> <span class="o">=</span> <span class="n">branch</span>
+            <span class="n">n</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="n">m</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">zl3</span><span class="o">.</span><span class="n">get_d_par</span><span class="p">(</span><span class="n">elem</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">u</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">zl3</span><span class="o">.</span><span class="n">get_d_par</span><span class="p">(</span><span class="n">elem</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="k">elif</span> <span class="n">branch</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;q&quot;</span><span class="p">):</span>
+            <span class="n">elem</span> <span class="o">=</span> <span class="n">branch</span><span class="p">[:</span><span class="o">-</span><span class="mi">3</span><span class="p">]</span>
+            <span class="n">n</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">branch</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;_be&quot;</span><span class="p">):</span>
+                <span class="n">m</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">zl3</span><span class="o">.</span><span class="n">get_q_par</span><span class="p">(</span><span class="n">elem</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">m</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="n">ind</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">zl3</span><span class="o">.</span><span class="n">get_q_par</span><span class="p">(</span><span class="n">elem</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">u</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">zl3</span><span class="o">.</span><span class="n">get_q_par</span><span class="p">(</span><span class="n">elem</span><span class="p">)[</span><span class="mi">4</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="n">branch</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;_bc&quot;</span><span class="p">):</span>
+                <span class="n">m</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">zl3</span><span class="o">.</span><span class="n">get_q_par</span><span class="p">(</span><span class="n">elem</span><span class="p">)[</span><span class="mi">3</span><span class="p">]</span>
+                <span class="n">m</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="n">ind</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">zl3</span><span class="o">.</span><span class="n">get_q_par</span><span class="p">(</span><span class="n">elem</span><span class="p">)[</span><span class="mi">2</span><span class="p">]</span>
+                <span class="n">u</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">zl3</span><span class="o">.</span><span class="n">get_q_par</span><span class="p">(</span><span class="n">elem</span><span class="p">)[</span><span class="mi">5</span><span class="p">]</span>
+
+        <span class="k">elif</span> <span class="n">branch</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;a&quot;</span><span class="p">):</span>
+            <span class="c1"># write an equation with each branch</span>
+            <span class="n">ind_in</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">(</span><span class="n">br_lower</span> <span class="o">==</span> <span class="n">branch</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;in&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># index of the control branch in br</span>
+
+            <span class="k">if</span> <span class="n">branch</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;_in&quot;</span><span class="p">):</span>
+                <span class="n">n</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="n">ind_in</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="k">elif</span> <span class="n">branch</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;_ou&quot;</span><span class="p">):</span>
+                <span class="n">m</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="n">ind_in</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="k">elif</span> <span class="n">branch</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;e&quot;</span><span class="p">):</span>
+            <span class="n">m</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="n">ind_ctr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">(</span><span class="n">br_lower</span> <span class="o">==</span> <span class="n">br_ctr</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># index of the control branch in br</span>
+            <span class="n">m</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="n">ind_ctr</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">br_val</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">elif</span> <span class="n">branch</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;g&quot;</span><span class="p">):</span>
+            <span class="n">n</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="n">ind_ctr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">(</span><span class="n">br_lower</span> <span class="o">==</span> <span class="n">br_ctr</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># index of the control branch in br</span>
+            <span class="n">m</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="n">ind_ctr</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">br_val</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">elif</span> <span class="n">branch</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;h&quot;</span><span class="p">):</span>
+            <span class="n">m</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="n">ind_ctr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">(</span><span class="n">br_lower</span> <span class="o">==</span> <span class="n">br_ctr</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># index of the control branch in br</span>
+            <span class="n">n</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="n">ind_ctr</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">br_val</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">elif</span> <span class="n">branch</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;f&quot;</span><span class="p">):</span>
+            <span class="n">n</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="n">ind_ctr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">(</span><span class="n">br_lower</span> <span class="o">==</span> <span class="n">br_ctr</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># index of the control branch in br</span>
+            <span class="n">n</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="n">ind_ctr</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">br_val</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">elif</span> <span class="n">branch</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;b&quot;</span><span class="p">):</span>
+            <span class="n">m</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="n">v</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">p</span> <span class="o">=</span> <span class="n">br_val</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="p">:]</span>
+            <span class="k">if</span> <span class="n">t</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                <span class="n">u</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">u</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="n">f</span><span class="o">*</span><span class="n">t</span> <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">360</span><span class="o">*</span><span class="n">p</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">branch</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">):</span>
+            <span class="n">m</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="n">i</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">p</span> <span class="o">=</span> <span class="n">br_val</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="p">:]</span>
+            <span class="k">if</span> <span class="n">t</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                <span class="n">u</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">u</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="n">f</span><span class="o">*</span><span class="n">t</span> <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">360</span><span class="o">*</span><span class="n">p</span><span class="p">)</span>
+                
+        <span class="k">elif</span> <span class="n">branch</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;c&quot;</span><span class="p">):</span>
+            <span class="n">m</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="n">n</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">zl4</span><span class="o">.</span><span class="n">tau</span> <span class="o">/</span> <span class="n">br_val</span><span class="p">[</span><span class="n">ind</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">u</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">zl4</span><span class="o">.</span><span class="n">v_aurreko</span><span class="p">[</span><span class="n">branch</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">branch</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;l&quot;</span><span class="p">):</span>
+            <span class="n">m</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">zl4</span><span class="o">.</span><span class="n">tau</span> <span class="o">/</span> <span class="n">br_val</span><span class="p">[</span><span class="n">ind</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">n</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="n">u</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">zl4</span><span class="o">.</span><span class="n">i_aurreko</span><span class="p">[</span><span class="n">branch</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">u</span></div>
+
+
+<div class="viewcode-block" id="get_reduced_incidence_matrix"><a class="viewcode-back" href="../../zlel.html#zlel.zlel_p2.get_reduced_incidence_matrix">[docs]</a><span class="k">def</span> <span class="nf">get_reduced_incidence_matrix</span><span class="p">(</span><span class="n">info</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Takes whole incidence matrix and returns reduced version.</span>
+<span class="sd">        If present, it deletes row corresponding to node 0.</span>
+<span class="sd">        If not, it deletes the first row instead.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        info: dict containing all circuit info.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A: reduced incidence matrix of the circuit.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">nd</span><span class="p">,</span> <span class="n">mat</span> <span class="o">=</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;nd&quot;</span><span class="p">],</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;incidence_mat&quot;</span><span class="p">]</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">(</span><span class="n">nd</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">mat</span><span class="p">[</span><span class="mi">1</span><span class="p">:,</span> <span class="p">:]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">ind</span> <span class="o">=</span> <span class="n">a</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">mat</span><span class="p">,</span> <span class="n">ind</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="run_commands"><a class="viewcode-back" href="../../zlel.html#zlel.zlel_p2.run_commands">[docs]</a><span class="k">def</span> <span class="nf">run_commands</span><span class="p">(</span><span class="n">info</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Runs all commands of the circuit.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        info: dict containing all circuit data.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;com_el&quot;</span><span class="p">])):</span>
+        <span class="n">com</span> <span class="o">=</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;com_el&quot;</span><span class="p">][</span><span class="n">ind</span><span class="p">][</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="k">if</span> <span class="n">com</span> <span class="o">==</span> <span class="s2">&quot;pr&quot;</span><span class="p">:</span>
+            <span class="n">command_pr</span><span class="p">(</span><span class="n">info</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">com</span> <span class="o">==</span> <span class="s2">&quot;op&quot;</span><span class="p">:</span>
+            <span class="n">command_op</span><span class="p">(</span><span class="n">info</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">com</span> <span class="o">==</span> <span class="s2">&quot;dc&quot;</span><span class="p">:</span>
+            <span class="n">command_dc</span><span class="p">(</span><span class="n">info</span><span class="p">,</span>
+                       <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="o">.</span><span class="n">tolist</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;com_val&quot;</span><span class="p">][</span><span class="n">ind</span><span class="p">,</span> <span class="p">:]),</span>
+                       <span class="n">info</span><span class="p">[</span><span class="s2">&quot;com_ctr&quot;</span><span class="p">][</span><span class="n">ind</span><span class="p">])</span>
+        <span class="k">elif</span> <span class="n">com</span> <span class="o">==</span> <span class="s2">&quot;tr&quot;</span><span class="p">:</span>
+            <span class="n">command_tr</span><span class="p">(</span><span class="n">info</span><span class="p">,</span>
+                       <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="o">.</span><span class="n">tolist</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;com_val&quot;</span><span class="p">][</span><span class="n">ind</span><span class="p">,</span> <span class="p">:]))</span></div>
+
+
+<span class="sd">&quot;&quot;&quot;    </span>
+<span class="sd">https://stackoverflow.com/questions/419163/what-does-if-name-main-do</span>
+<span class="sd">https://stackoverflow.com/questions/19747371/</span>
+<span class="sd">python-exit-commands-why-so-many-and-when-should-each-be-used</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="s2">&quot;../cirs/all/1_zlel_anpli.cir&quot;</span>
+
+    <span class="n">cir_info</span> <span class="o">=</span> <span class="n">process_circuit</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+    
+    <span class="n">run_commands</span><span class="p">(</span><span class="n">cir_info</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">ZLEL</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Mikel Elorza (mikelelorza0327@gmail.com), Egoitz Gonzalez (egoitz.gonz@gmail.com).
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,403 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>zlel.zlel_p1 &#8212; ZLEL 0.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for zlel.zlel_p1</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">.. module:: zlel_p1.py</span>
+<span class="sd">    :synopsis:</span>
+<span class="sd">        This module parses circuit info, and separates it into different data arrays.</span>
+<span class="sd">        It also calculates incidence matrix for the given input circuit.</span>
+
+<span class="sd">.. moduleauthor:: Mikel Elorza (mikelelorza0327@gmail.com), Egoitz Gonzalez (egoitz.gonz@gmail.com)</span>
+
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+
+
+<div class="viewcode-block" id="cir_parser"><a class="viewcode-back" href="../../zlel.html#zlel.zlel_p1.cir_parser">[docs]</a><span class="k">def</span> <span class="nf">cir_parser</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This function takes a .cir test circuit and parse it into 4 matrices.</span>
+
+<span class="sd">    If the file has not the proper dimensions it warns and exits.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        filename: string with the name of the file</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        cir_el: np array of strings with the elements to parse. size(1,b)</span>
+<span class="sd">        cir_nd: np array with the nodes to the circuit. size(b,4)</span>
+<span class="sd">        cir_val: np array with the values of the elements. size(b,3)</span>
+<span class="sd">        cir_ctrl: np array of strings with the element which branch</span>
+<span class="sd">        controls the controlled sources. size(1,b)</span>
+
+<span class="sd">    Rises:</span>
+<span class="sd">        SystemExit</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">cir</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">str</span><span class="p">))</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="s2">&quot;File corrupted: .cir size is incorrect.&quot;</span><span class="p">)</span>
+
+    <span class="n">cir_el</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">cir</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
+    <span class="n">cir_nd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">cir</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:</span><span class="mi">5</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">cir_val</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">cir</span><span class="p">[:,</span> <span class="mi">5</span><span class="p">:</span><span class="mi">8</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">cir_ctrl</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">cir</span><span class="p">[:,</span> <span class="mi">8</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">cir_el</span><span class="p">,</span> <span class="n">cir_nd</span><span class="p">,</span> <span class="n">cir_val</span><span class="p">,</span> <span class="n">cir_ctrl</span></div>
+
+
+<div class="viewcode-block" id="element_branches"><a class="viewcode-back" href="../../zlel.html#zlel.zlel_p1.element_branches">[docs]</a><span class="k">def</span> <span class="nf">element_branches</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">nodes</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Separates elements connected to two or more nodes in different branches, depending on the element type.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        element: element name</span>
+<span class="sd">        nodes: integer np.array with nodes of the element, size(1,4)</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        br: branches in which the element is separated</span>
+<span class="sd">        nd: nodes which element is connected to</span>
+<span class="sd">        number_of_branches: # of branches of the element</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">elem_type</span> <span class="o">=</span> <span class="n">element</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">elem_type</span> <span class="o">==</span> <span class="s2">&quot;q&quot;</span><span class="p">:</span>
+        <span class="n">br</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">element</span> <span class="o">+</span> <span class="s2">&quot;_be&quot;</span><span class="p">,</span> <span class="n">element</span> <span class="o">+</span> <span class="s2">&quot;_bc&quot;</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
+        <span class="n">nd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">nodes</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">3</span><span class="p">],</span> <span class="n">nodes</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="o">-</span><span class="mi">1</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">number_of_branches</span> <span class="o">=</span> <span class="mi">2</span>
+
+    <span class="k">elif</span> <span class="n">elem_type</span> <span class="o">==</span> <span class="s2">&quot;a&quot;</span><span class="p">:</span>
+        <span class="n">br</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">element</span> <span class="o">+</span> <span class="s2">&quot;_in&quot;</span><span class="p">,</span> <span class="n">element</span> <span class="o">+</span> <span class="s2">&quot;_ou&quot;</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
+        <span class="n">nd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">nodes</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">],</span> <span class="n">nodes</span><span class="p">[</span><span class="mi">2</span><span class="p">:</span><span class="mi">4</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">number_of_branches</span> <span class="o">=</span> <span class="mi">2</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">br</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">element</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
+        <span class="n">nd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">nodes</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">number_of_branches</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="k">return</span> <span class="n">br</span><span class="p">,</span> <span class="n">nd</span><span class="p">,</span> <span class="n">number_of_branches</span></div>
+
+
+<div class="viewcode-block" id="span_branches"><a class="viewcode-back" href="../../zlel.html#zlel.zlel_p1.span_branches">[docs]</a><span class="k">def</span> <span class="nf">span_branches</span><span class="p">(</span><span class="n">cir_el</span><span class="p">,</span> <span class="n">cir_nd</span><span class="p">,</span> <span class="n">cir_val</span><span class="p">,</span> <span class="n">cir_ctr</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Takes parsed cir matrices and expands the list elements to get a list of all the branches.</span>
+
+<span class="sd">    Elements connected to two or more nodes are replaced by different branches linking strictly two nodes each.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        cir_el: parsed cir_el</span>
+<span class="sd">        cir_nd: parsed cir_nd, size(b,4)</span>
+<span class="sd">        cir_val: parsed cir_val, size(b,3)</span>
+<span class="sd">        cir_ctr: parsed cir_ctr, size(b,1)</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        branches: reshaped cir_el</span>
+<span class="sd">        branch_nd: reshaped cir_nd, now it is a (b,2) matrix</span>
+<span class="sd">        branch_val: reshaped cir_val, contains values repeated in branches corresponding to same element, size(b,3)</span>
+<span class="sd">        branch_ctr: reshaped cir_ctr, contains controls repeated in branches corresponding to same element, size(b,1)</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        SystemExit</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">branches</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
+    <span class="n">branch_nd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">branch_val</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">branch_ctr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cir_el</span><span class="p">)):</span>
+        <span class="n">span_elem</span> <span class="o">=</span> <span class="n">element_branches</span><span class="p">(</span><span class="n">cir_el</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">cir_nd</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="n">branches</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">branches</span><span class="p">,</span> <span class="n">span_elem</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">branch_nd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">branch_nd</span><span class="p">,</span> <span class="n">span_elem</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">span_elem</span><span class="p">[</span><span class="mi">2</span><span class="p">]):</span>
+            <span class="n">branch_val</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">branch_val</span><span class="p">,</span> <span class="n">cir_val</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="p">:],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">branch_ctr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">branch_ctr</span><span class="p">,</span> <span class="n">cir_ctr</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">(</span><span class="n">branch_nd</span> <span class="o">==</span> <span class="mi">0</span><span class="p">))</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="s2">&quot;Reference node </span><span class="se">\&quot;</span><span class="s2">0</span><span class="se">\&quot;</span><span class="s2"> is not defined in the circuit.&quot;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">(</span><span class="n">branch_nd</span> <span class="o">==</span> <span class="mi">0</span><span class="p">))</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="s2">&quot;Node 0 is floating.&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">branches</span><span class="p">,</span> <span class="n">branch_nd</span><span class="p">,</span> <span class="n">branch_val</span><span class="p">,</span> <span class="n">branch_ctr</span></div>
+
+
+<div class="viewcode-block" id="check_parallel_v"><a class="viewcode-back" href="../../zlel.html#zlel.zlel_p1.check_parallel_v">[docs]</a><span class="k">def</span> <span class="nf">check_parallel_v</span><span class="p">(</span><span class="n">branches</span><span class="p">,</span> <span class="n">branches_val</span><span class="p">,</span> <span class="n">incidence_matrix</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This methods checks whether any two different voltage sources are connected in parallel.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        nd: list of ordered nodes</span>
+<span class="sd">        branches: reshaped cir_el, list of branch names</span>
+<span class="sd">        branches_val: reshaped cir_val, list of values of each branch&#39;s element, size(b,3) np array</span>
+<span class="sd">        incidence_matrix: calculated incidence matrix</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        SystemExit</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">v_sources</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">incidence_matrix</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:]))</span> <span class="k">if</span>
+                          <span class="n">branches</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;v&quot;</span> <span class="ow">or</span> <span class="n">branches</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;b&quot;</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">v_sources</span><span class="p">:</span>
+        <span class="n">value1</span> <span class="o">=</span> <span class="n">branches_val</span><span class="p">[</span><span class="n">v</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="n">v_sources</span><span class="p">[</span><span class="n">v_sources</span> <span class="o">&gt;</span> <span class="n">v</span><span class="p">]:</span>
+            <span class="n">value2</span> <span class="o">=</span> <span class="n">branches_val</span><span class="p">[</span><span class="n">u</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">incidence_matrix</span><span class="p">[:,</span> <span class="n">v</span><span class="p">]</span> <span class="o">==</span> <span class="n">incidence_matrix</span><span class="p">[:,</span> <span class="n">u</span><span class="p">])</span> <span class="ow">and</span> <span class="n">value1</span> <span class="o">!=</span> <span class="n">value2</span><span class="p">:</span>
+                <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="s2">&quot;Parallel V sources at branches &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; and &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">u</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;.&quot;</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">incidence_matrix</span><span class="p">[:,</span> <span class="n">v</span><span class="p">]</span> <span class="o">==</span> <span class="o">-</span> <span class="n">incidence_matrix</span><span class="p">[:,</span> <span class="n">u</span><span class="p">])</span> <span class="ow">and</span> <span class="n">value1</span> <span class="o">!=</span> <span class="o">-</span> <span class="n">value2</span><span class="p">:</span>
+                <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="s2">&quot;Parallel V sources at branches &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; and &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">u</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;.&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="check_serial_i"><a class="viewcode-back" href="../../zlel.html#zlel.zlel_p1.check_serial_i">[docs]</a><span class="k">def</span> <span class="nf">check_serial_i</span><span class="p">(</span><span class="n">nd</span><span class="p">,</span> <span class="n">branches</span><span class="p">,</span> <span class="n">branches_val</span><span class="p">,</span> <span class="n">incidence_matrix</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This methods checks whether any two different current sources are connected in series.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        nd: list of ordered nodes</span>
+<span class="sd">        branches: reshaped cir_el, list of branch names</span>
+<span class="sd">        branches_val: reshaped cir_val, list of values of each branch&#39;s element, size(b,3) np array</span>
+<span class="sd">        incidence_matrix: calculated incidence matrix</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        SystemExit</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">i_sources</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">incidence_matrix</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:]))</span> <span class="k">if</span>
+                          <span class="n">branches</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;i&quot;</span> <span class="ow">or</span> <span class="n">branches</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;y&quot;</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">incidence_matrix</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])):</span>
+        <span class="n">non_zero</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">(</span><span class="n">incidence_matrix</span><span class="p">[</span><span class="n">n</span><span class="p">,</span> <span class="p">:]</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">j</span> <span class="ow">in</span> <span class="n">i_sources</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">non_zero</span><span class="p">):</span>
+            <span class="n">i_sum</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">non_zero</span><span class="p">:</span>
+                <span class="n">i_sum</span> <span class="o">+=</span> <span class="n">branches_val</span><span class="p">[</span><span class="n">elem</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">incidence_matrix</span><span class="p">[</span><span class="n">n</span><span class="p">][</span><span class="n">elem</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">i_sum</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="s2">&quot;I sources in series at node &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">nd</span><span class="p">[</span><span class="n">n</span><span class="p">])</span> <span class="o">+</span> <span class="s2">&quot;.&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="node_set"><a class="viewcode-back" href="../../zlel.html#zlel.zlel_p1.node_set">[docs]</a><span class="k">def</span> <span class="nf">node_set</span><span class="p">(</span><span class="n">cir_nd</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This method gathers all nodes in a single sorted list.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        cir_nd: parsed or reshaped cir_nd np.array, size(b,2) or size(b,4)</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        nodes: sorted np.array of all nodes</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">cir_nd</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="build_incidence_matrix"><a class="viewcode-back" href="../../zlel.html#zlel.zlel_p1.build_incidence_matrix">[docs]</a><span class="k">def</span> <span class="nf">build_incidence_matrix</span><span class="p">(</span><span class="n">branches</span><span class="p">,</span> <span class="n">branch_nd</span><span class="p">,</span> <span class="n">nodes</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generates incidence matrix for provided branches, and their connection nodes.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        branches: reshaped cir_el / list of branches, size(1,b) np.array</span>
+<span class="sd">        branch_nd: reshaped cir_nd / list of branch nodes, size(b,2) np.array</span>
+<span class="sd">        nodes: sorted np.array set of nodes, size(1,n) np.array</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        incidence_mat: incidence matrix, size(n,b) np.array</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">incidence_mat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">nodes</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">branches</span><span class="p">)),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">br</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">branches</span><span class="p">)):</span>
+        <span class="n">row</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">(</span><span class="n">nodes</span> <span class="o">==</span> <span class="n">branch_nd</span><span class="p">[</span><span class="n">br</span><span class="p">][</span><span class="mi">0</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">incidence_mat</span><span class="p">[</span><span class="n">row</span><span class="p">][</span><span class="n">br</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">row</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">(</span><span class="n">nodes</span> <span class="o">==</span> <span class="n">branch_nd</span><span class="p">[</span><span class="n">br</span><span class="p">][</span><span class="mi">1</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">incidence_mat</span><span class="p">[</span><span class="n">row</span><span class="p">][</span><span class="n">br</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="k">return</span> <span class="n">incidence_mat</span></div>
+
+
+<div class="viewcode-block" id="print_cir_info"><a class="viewcode-back" href="../../zlel.html#zlel.zlel_p1.print_cir_info">[docs]</a><span class="k">def</span> <span class="nf">print_cir_info</span><span class="p">(</span><span class="n">cir_el</span><span class="p">,</span> <span class="n">cir_nd</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">nodes</span><span class="p">,</span> <span class="n">el_num</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Prints the info of the circuit:</span>
+<span class="sd">            1.- Elements info</span>
+<span class="sd">            2.- Node info</span>
+<span class="sd">            3.- Branch info</span>
+<span class="sd">            4.- Variable info</span>
+<span class="sd">    Args:</span>
+<span class="sd">        cir_el: reshaped cir_el</span>
+<span class="sd">        cir_nd: reshaped cir_nd. Now it will be a (b,2) matrix</span>
+<span class="sd">        b: # of branches</span>
+<span class="sd">        n: # number of nodes</span>
+<span class="sd">        nodes: an array with the circuit nodes sorted</span>
+<span class="sd">        el_num:  the # of elements.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Element info</span>
+    <span class="nb">print</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">el_num</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39; Elements&#39;</span><span class="p">)</span>
+
+    <span class="c1"># Node info</span>
+    <span class="nb">print</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39; Different nodes: &#39;</span> <span class="o">+</span>
+          <span class="nb">str</span><span class="p">(</span><span class="n">nodes</span><span class="p">))</span>
+
+    <span class="c1"># Branch info</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; Branches: &quot;</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">b</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;. branch:</span><span class="se">\t</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">cir_el</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span>
+              <span class="s2">&quot;,</span><span class="se">\t</span><span class="s2">i&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">+</span>
+              <span class="s2">&quot;,</span><span class="se">\t</span><span class="s2">v&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">+</span>
+              <span class="s2">&quot;=e&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">cir_nd</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span> <span class="o">+</span>
+              <span class="s2">&quot;-e&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">cir_nd</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]))</span>
+
+    <span class="c1"># Variable info</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">b</span> <span class="o">+</span> <span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span> <span class="o">+</span> <span class="s2">&quot; variables: &quot;</span><span class="p">)</span>
+
+    <span class="c1"># Print all the nodes but the first (0 because is sorted)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;e&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;, &quot;</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">flush</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">b</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;i&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;, &quot;</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">flush</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># Print all the branches but the last to close it properly</span>
+    <span class="c1"># It works because the minimum amount of branches in a circuit must be 2.</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">b</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;v&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;, &quot;</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">flush</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;v&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">b</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="print_incidence_matrix"><a class="viewcode-back" href="../../zlel.html#zlel.zlel_p1.print_incidence_matrix">[docs]</a><span class="k">def</span> <span class="nf">print_incidence_matrix</span><span class="p">(</span><span class="n">mat</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Prints the incidence matrix provided.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        mat: incidence matrix np.array</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Incidence Matrix: &quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">mat</span><span class="p">)</span></div>
+
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">https://stackoverflow.com/questions/419163/what-does-if-name-main-do</span>
+<span class="sd">https://stackoverflow.com/questions/19747371/</span>
+<span class="sd">python-exit-commands-why-so-many-and-when-should-each-be-used</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="s2">&quot;../cirs/all/0_zlel_OPAMP.cir&quot;</span>
+
+    <span class="c1"># Parse the circuit</span>
+    <span class="n">cir_el</span><span class="p">,</span> <span class="n">cir_nd</span><span class="p">,</span> <span class="n">cir_val</span><span class="p">,</span> <span class="n">cir_ctr</span> <span class="o">=</span> <span class="n">cir_parser</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+
+    <span class="c1"># Identify branches and nodes</span>
+    <span class="n">br</span><span class="p">,</span> <span class="n">br_nd</span><span class="p">,</span> <span class="n">br_val</span><span class="p">,</span> <span class="n">br_ctr</span> <span class="o">=</span> <span class="n">span_branches</span><span class="p">(</span><span class="n">cir_el</span><span class="p">,</span> <span class="n">cir_nd</span><span class="p">,</span> <span class="n">cir_val</span><span class="p">,</span> <span class="n">cir_ctr</span><span class="p">)</span>
+    <span class="n">nd</span> <span class="o">=</span> <span class="n">node_set</span><span class="p">(</span><span class="n">cir_nd</span><span class="p">)</span>
+
+    <span class="n">mat</span> <span class="o">=</span> <span class="n">build_incidence_matrix</span><span class="p">(</span><span class="n">br</span><span class="p">,</span> <span class="n">br_nd</span><span class="p">,</span> <span class="n">nd</span><span class="p">)</span>
+
+    <span class="n">check_parallel_v</span><span class="p">(</span><span class="n">br</span><span class="p">,</span> <span class="n">br_val</span><span class="p">,</span> <span class="n">mat</span><span class="p">)</span>
+    <span class="n">check_serial_i</span><span class="p">(</span><span class="n">nd</span><span class="p">,</span> <span class="n">br</span><span class="p">,</span> <span class="n">br_val</span><span class="p">,</span> <span class="n">mat</span><span class="p">)</span>
+
+    <span class="c1"># Print info</span>
+    <span class="n">print_cir_info</span><span class="p">(</span><span class="n">br</span><span class="p">,</span> <span class="n">br_nd</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">br</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">nd</span><span class="p">),</span> <span class="n">nd</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">cir_el</span><span class="p">))</span>
+    <span class="n">print_incidence_matrix</span><span class="p">(</span><span class="n">mat</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">ZLEL</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Mikel Elorza (mikelelorza0327@gmail.com), Egoitz Gonzalez (egoitz.gonz@gmail.com).
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
