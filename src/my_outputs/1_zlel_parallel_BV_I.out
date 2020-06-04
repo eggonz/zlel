@@ -1,15 +1,1 @@
-Traceback (most recent call last):
-  File "zlel_p3.py", line 321, in <module>
-    zl2.run_commands(cir_info)
-  File "/home/egoitz/PycharmProjects/zlel/src/zlel/zlel_p2.py", line 469, in run_commands
-    command_op(info)
-  File "/home/egoitz/PycharmProjects/zlel/src/zlel/zlel_p2.py", line 120, in command_op
-    sol = solve_circuit_in_time(info, t)
-  File "/home/egoitz/PycharmProjects/zlel/src/zlel/zlel_p2.py", line 176, in solve_circuit_in_time
-    sol = np.linalg.solve(tableau_t, tableau_u)
-  File "<__array_function__ internals>", line 6, in solve
-  File "/home/egoitz/PycharmProjects/zlel/venv/lib/python3.6/site-packages/numpy/linalg/linalg.py", line 399, in solve
-    r = gufunc(a, b, signature=signature, extobj=extobj)
-  File "/home/egoitz/PycharmProjects/zlel/venv/lib/python3.6/site-packages/numpy/linalg/linalg.py", line 97, in _raise_linalgerror_singular
-    raise LinAlgError("Singular matrix")
-numpy.linalg.LinAlgError: Singular matrix
+Parallel V sources at branches 0 and 1.

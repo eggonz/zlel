@@ -140,7 +140,8 @@ def check_parallel_v(branches, branches_val, incidence_matrix):
 
     """
 
-    v_sources = np.array([i for i in range(len(incidence_matrix[0, :])) if branches[i][0].lower() == "v"], dtype=int)
+    v_sources = np.array([i for i in range(len(incidence_matrix[0, :])) if
+                          branches[i][0].lower() == "v" or branches[i][0].lower() == "b"], dtype=int)
     for v in v_sources:
         value1 = branches_val[v, 0]
         for u in v_sources[v_sources > v]:
@@ -166,7 +167,8 @@ def check_serial_i(nd, branches, branches_val, incidence_matrix):
 
     """
 
-    i_sources = np.array([i for i in range(len(incidence_matrix[0, :])) if branches[i][0].lower() == "i"], dtype=int)
+    i_sources = np.array([i for i in range(len(incidence_matrix[0, :])) if
+                          branches[i][0].lower() == "i" or branches[i][0].lower() == "y"], dtype=int)
     for n in range(len(incidence_matrix[:, 0])):
         non_zero = np.flatnonzero(incidence_matrix[n, :] != 0)
         if all(j in i_sources for j in non_zero):

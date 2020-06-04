@@ -1,24 +1,14 @@
 
 ========== Nodes voltage to reference ========
-e1 =  [10.]
+e1 =  [ 10.]
 
 ========== Branches voltage difference ========
-v1 =  [10.]
-v2 =  [10.]
+v1 =  [ 10.]
+v2 =  [ 10.]
 
 =============== Branches currents ==============
 i1 =  [-0.01]
-i2 =  [0.01]
+i2 =  [ 0.01]
 
 ================= End solution =================
 
-Traceback (most recent call last):
-  File "zlel_p3.py", line 321, in <module>
-    zl2.run_commands(cir_info)
-  File "/home/egoitz/PycharmProjects/zlel/src/zlel/zlel_p2.py", line 473, in run_commands
-    info["com_ctr"][ind])
-  File "/home/egoitz/PycharmProjects/zlel/src/zlel/zlel_p2.py", line 202, in command_dc
-    change_value_of_elem(info, control.lower(), v)
-  File "/home/egoitz/PycharmProjects/zlel/src/zlel/zlel_p2.py", line 224, in change_value_of_elem
-    ind = np.flatnonzero(info["br"] == elem_name)[0]
-IndexError: index 0 is out of bounds for axis 0 with size 0

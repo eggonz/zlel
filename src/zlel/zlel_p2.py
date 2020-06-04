@@ -19,7 +19,7 @@ import zlel_p3 as zl3
 import zlel_p4 as zl4
 
 
-def print_solution(sol, b, n):
+def print_solution2(sol, b, n):
     """ This function prints the solution with format.
     
         Args:
@@ -27,21 +27,52 @@ def print_solution(sol, b, n):
             (e_1,..,e_n-1,v_1,..,v_b,i_1,..i_b)
             b: # of branches
             n: # of nodes
-    
     """
+    np.set_printoptions(sign=' ')
     print("\n========== Nodes voltage to reference ========")
     for i in range(1, n):
-        print("e" + str(i) + " = ", '['+','.join(['% .8f' % num for num in sol[i-1]])+']')
-        # print("e" + str(i) + " = ", sol[i-1])
+        # print("e" + str(i) + " = ", '['+','.join(['% .8f' % num for num in sol[i-1]])+']')
+        print("e" + str(i) + " = ", sol[i-1])
     print("\n========== Branches voltage difference ========")
     for i in range(1, b+1):
-        print("v" + str(i) + " = ", '['+','.join(['% .8f' % num for num in sol[i+n-2]])+']')
-        # print("v" + str(i) + " = ", sol[i+n-2])
+        # print("v" + str(i) + " = ", '['+','.join(['% .8f' % num for num in sol[i+n-2]])+']')
+        print("v" + str(i) + " = ", sol[i+n-2])
     print("\n=============== Branches currents ==============")
     for i in range(1, b+1):
-        print("i" + str(i) + " = ", '['+','.join(['% .8f' % num for num in sol[i+b+n-2]])+']')
-        # print("i" + str(i) + " = ", sol[i+b+n-2])
+        # print("i" + str(i) + " = ", '['+','.join(['% .8f' % num for num in sol[i+b+n-2]])+']')
+        print("i" + str(i) + " = ", sol[i+b+n-2])
         
+    print("\n================= End solution =================\n")
+
+
+def print_solution(sol, b, n):
+    """ This function prints the solution with format.
+
+        Args:
+            sol: np array with the solution of the Tableau equations
+            (e_1,..,e_n-1,v_1,..,v_b,i_1,..i_b)
+            b: # of branches
+            n: # of nodes
+
+    """
+    # The instructor solution needs to be a numpy array of numpy arrays
+    # of float. If it is not, convert it to this format.
+    if sol.dtype == np.float64:
+        np.set_printoptions(sign=' ')  # Only from numpy 1.14
+        tmp = np.zeros([np.size(sol), 1], dtype=float)
+        for ind in range(np.size(sol)):
+            tmp[ind] = np.array(sol[ind])
+        sol = tmp
+    print("\n========== Nodes voltage to reference ========")
+    for i in range(1, n):
+        print("e" + str(i) + " = ", sol[i - 1])
+    print("\n========== Branches voltage difference ========")
+    for i in range(1, b + 1):
+        print("v" + str(i) + " = ", sol[i + n - 2])
+    print("\n=============== Branches currents ==============")
+    for i in range(1, b + 1):
+        print("i" + str(i) + " = ", sol[i + b + n - 2])
+
     print("\n================= End solution =================\n")
     
 
@@ -171,6 +202,10 @@ def solve_circuit_in_time(info, t):
     a = get_reduced_incidence_matrix(info)
     m, n, u = get_element_matrices(info, t)
     tableau_t, tableau_u = build_tableau_system(a, m, n, u)
+    print(u)
+    print(np.linalg.det(tableau_t))
+    if np.linalg.det(tableau_t) == 0:
+        sys.exit("Error solving Tableau equations, check if det(T) != 0.")
 
     return np.linalg.solve(tableau_t, tableau_u)
 
@@ -196,7 +231,7 @@ def command_dc(info, values, control):
 
         v = start
         while v < end:
-            change_value_of_elem(info, control.lower(), v)  # TODO lower
+            change_value_of_elem(info, control, v)
             sol = solve_circuit_in_time(info, t)
 
             # write in csv
@@ -218,7 +253,8 @@ def change_value_of_elem(info, elem_name, new_value):
          elem_name: element name
          new_value: new value, which will override the previous
     """
-    ind = np.flatnonzero(info["br"] == elem_name)[0]
+    br_lower = np.array(list(map(lambda x: x.lower(), info["br"])))
+    ind = np.flatnonzero(br_lower == elem_name.lower())[0]
     info["br_val"][ind, 0] = new_value
 
 
