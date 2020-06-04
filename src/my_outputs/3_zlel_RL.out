@@ -2,9 +2,9 @@
 3 Different nodes: [0 1 2]
 
 3 Branches: 
-	1. branch:	v1,	i1,	v1=e1-e0
-	2. branch:	r1,	i2,	v2=e1-e2
-	3. branch:	l1,	i3,	v3=e2-e0
+	1. branch:	V1,	i1,	v1=e1-e0
+	2. branch:	R1,	i2,	v2=e1-e2
+	3. branch:	L1,	i3,	v3=e2-e0
 
 8 variables: 
 e1, e2, i1, i2, i3, v1, v2, v3
@@ -13,16 +13,5 @@ Incidence Matrix:
 [[-1  0 -1]
  [ 1  1  0]
  [ 0 -1  1]]
-0.0 0.002 1e-05
-a
-ez
-Traceback (most recent call last):
-  File "zlel_p3.py", line 321, in <module>
-    zl2.run_commands(cir_info)
-  File "/home/egoitz/PycharmProjects/zlel/src/zlel/zlel_p2.py", line 475, in run_commands
-    np.ndarray.tolist(info["com_val"][ind, :]))
-  File "/home/egoitz/PycharmProjects/zlel/src/zlel/zlel_p2.py", line 250, in command_tr
-    zl4.update_state(info,sol)
-  File "/home/egoitz/PycharmProjects/zlel/src/zlel/zlel_p4.py", line 29, in update_state
-    i_aurreko[elem]=sol[len(info["nd"])+len(info["br"])+ind]
-IndexError: index 8 is out of bounds for axis 0 with size 8
+Elapsed time: 
+0.04405908199987607

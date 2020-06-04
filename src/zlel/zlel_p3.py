@@ -54,7 +54,7 @@ def diode_nr(I0, nD, Vdj):
     
     Vt = 8.6173324e-5*300*nD
 
-    gd =  I0 / Vt * np.exp(Vdj / Vt)
+    gd = I0 / Vt * np.exp(Vdj / Vt)
     Id = I0 * (np.exp(Vdj / Vt) - 1) - gd * Vdj
     
     return gd, Id
@@ -69,7 +69,8 @@ def update_diode_par(info, Vdj, br_name):
         Vdj: current value for Vd.
         br_name: name of one of the element's branch, whose parameters will be updated.
     """
-    ind = np.where(info["br"] == br_name)[0][0]  # getting index from np.array
+    br_lower = np.array(list(map(lambda x: x.lower(), info["br"])))
+    ind = np.where(br_lower == br_name.lower())[0][0]  # getting index from np.array
     nD = info["br_val"][ind][1]
     I0 = info["br_val"][ind][0]
     gd, Id = diode_nr(I0, nD, Vdj)
@@ -118,7 +119,7 @@ def transistor_nr(Ies, Ics, Vbej, Vbcj, alphaR, alphaF, n=1):
     return g11, g12, g21, g22
 
 
-def ebers_moll_currents(Ies, Ics, Vbej, Vbcj, alphaR, alphaF,g11,g12,g21,g22, n=1):
+def ebers_moll_currents(Ies, Ics, Vbej, Vbcj, alphaR, alphaF, g11, g12, g21, g22, n=1):
     """
     This function returns the current values of Ebers-Moll currents.
 
@@ -161,7 +162,7 @@ def update_transistor_par(info, Vbej, Vbcj, br_name):
     alphaR = Ies / Ics * alphaF
 
     g11, g12, g21, g22 = transistor_nr(Ies, Ics, Vbej, Vbcj, alphaR, alphaF, n=1)
-    ebmoIe, ebmoIc = ebers_moll_currents(Ies, Ics, Vbej, Vbcj, alphaR, alphaF,g11,g12,g21,g22, n=1)
+    ebmoIe, ebmoIc = ebers_moll_currents(Ies, Ics, Vbej, Vbcj, alphaR, alphaF, g11, g12, g21, g22, n=1)
     q_parameters[br_name[:-3].lower()] = [g11, g12, g21, g22, ebmoIe, ebmoIc]
 
 
@@ -189,11 +190,11 @@ def update_all_nl_par(info, tableau_sol):
     n = len(info["nd"])
     for ind in range(len(info["br"])):
         br = info["br"][ind]
-        br=br.lower()
+        br = br.lower()
         if br.startswith("d"):
             vd = tableau_sol[n + ind-1]
             update_diode_par(info, vd, br)
-        elif br.startswith("q") and br.endswith("_be"): # update once per element
+        elif br.startswith("q") and br.endswith("_be"):  # update once per element
             vbe = tableau_sol[n + ind-1]
             vbc = tableau_sol[n + ind]
             update_transistor_par(info, vbe, vbc, br)

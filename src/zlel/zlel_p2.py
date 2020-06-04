@@ -31,16 +31,16 @@ def print_solution(sol, b, n):
     """
     print("\n========== Nodes voltage to reference ========")
     for i in range(1, n):
-        # print("e" + str(i) + " = ", '['+','.join(['% .8f' % num for num in sol[i-1]])+']')
-        print("e" + str(i) + " = ", sol[i-1])
+        print("e" + str(i) + " = ", '['+','.join(['% .8f' % num for num in sol[i-1]])+']')
+        # print("e" + str(i) + " = ", sol[i-1])
     print("\n========== Branches voltage difference ========")
     for i in range(1, b+1):
-        # print("v" + str(i) + " = ", '['+','.join(['% .8f' % num for num in sol[i+n-2]])+']')
-        print("v" + str(i) + " = ", sol[i+n-2])
+        print("v" + str(i) + " = ", '['+','.join(['% .8f' % num for num in sol[i+n-2]])+']')
+        # print("v" + str(i) + " = ", sol[i+n-2])
     print("\n=============== Branches currents ==============")
     for i in range(1, b+1):
-        # print("i" + str(i) + " = ", '['+','.join(['% .8f' % num for num in sol[i+b+n-2]])+']')
-        print("i" + str(i) + " = ", sol[i+b+n-2])
+        print("i" + str(i) + " = ", '['+','.join(['% .8f' % num for num in sol[i+b+n-2]])+']')
+        # print("i" + str(i) + " = ", sol[i+b+n-2])
         
     print("\n================= End solution =================\n")
     
@@ -170,12 +170,9 @@ def solve_circuit_in_time(info, t):
         
     a = get_reduced_incidence_matrix(info)
     m, n, u = get_element_matrices(info, t)
-    
     tableau_t, tableau_u = build_tableau_system(a, m, n, u)
 
-    sol = np.linalg.solve(tableau_t, tableau_u)
-    
-    return sol
+    return np.linalg.solve(tableau_t, tableau_u)
 
 
 def command_dc(info, values, control):
@@ -238,22 +235,35 @@ def command_tr(info, values):
    
     file_name = info["file_name"][:-4] + ".tr"
     header = build_csv_header("t", len(info["br"]), len(info["nd"]))
+
+    dynamic = zl4.is_dynamic(info)
+
     with open(file_name, 'w') as file:
         print(header, file=file)
-        if not zl4.is_not_dynamic(info):
+
+        if dynamic:
             zl4.initialize(info, step)
+
         t = start
         sol = solve_circuit_in_time(info, t)
+
+        # write in csv
+        sol_csv = np.insert(sol, 0, t)
+        # sol to csv
+        sol_csv = ','.join(['%.9f' % num for num in sol_csv])
+        print(sol_csv, file=file)
+
         while t < end:
-            t += step
-            if not zl4.is_not_dynamic(info):
+            if dynamic:
                 zl4.update_state(info, sol)
+
+            t += step
             sol = solve_circuit_in_time(info, t)
             
             # write in csv
-            sol = np.insert(sol, 0, t)
+            sol_csv = np.insert(sol, 0, t)
             # sol to csv
-            sol_csv = ','.join(['%.5f' % num for num in sol])
+            sol_csv = ','.join(['%.9f' % num for num in sol_csv])
             print(sol_csv, file=file)
 
 
@@ -319,7 +329,7 @@ def process_circuit(filename):
 
 def get_element_matrices(info, t):
     """
-        If element equations have " M v + N i = u " form, this function builds
+        Given the element equations with the form " M v + N i = u ", this function builds
         and returns matrices M and N and vector u.
         t = -1 means time independent, amplitudes of B and Y will be used instead.
         Diode and transistor branches (d and q) are empty, and must be filled afterwards.
@@ -423,12 +433,12 @@ def get_element_matrices(info, t):
                 
         elif branch.startswith("c"):
             m[ind, ind] = 1
-            n[ind, ind] = -zl4.step/br_val[ind][0]
+            n[ind, ind] = -zl4.tau / br_val[ind][0]
             u[ind] = zl4.v_aurreko[branch]
 
         if branch.startswith("l"):
-            m[ind, ind] = 1
-            n[ind, ind] = -zl4.step/br_val[ind][0]
+            m[ind, ind] = -zl4.tau / br_val[ind][0]
+            n[ind, ind] = 1
             u[ind] = zl4.i_aurreko[branch]
 
     return m, n, u
@@ -488,7 +498,6 @@ if __name__ == "__main__":
     else:
         filename = "../cirs/all/1_zlel_anpli.cir"
 
-    print("a")
     cir_info = process_circuit(filename)
     
     run_commands(cir_info)
