@@ -13,10 +13,10 @@
 import time
 import sys
 
-if __name__ == "__main__":
-    import zlel_p2 as zl2
-else:
+if __name__ == "zlel.zlel_p4":
     import zlel.zlel_p2 as zl2
+else:
+    import zlel_p2 as zl2
 
 v_aurreko = {}
 i_aurreko = {}

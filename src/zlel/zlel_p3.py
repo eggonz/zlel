@@ -16,10 +16,10 @@ import time
 import numpy as np
 import sys
 
-if __name__ == "__main__":
-    import zlel_p2 as zl2
-else:
+if __name__ == "zlel.zlel_p3":
     import zlel.zlel_p2 as zl2
+else:
+    import zlel_p2 as zl2
 
 d_parameters = dict()
 q_parameters = dict()
@@ -157,7 +157,8 @@ def update_transistor_par(info, Vbej, Vbcj, br_name):
         Vdj: current value for Vd.
         br_name: name of one of the element's branch, whose parameters will be updated.
     """
-    ind = np.where(info["br"] == br_name)[0][0]  # getting index from np.array
+    br_lower = np.array(list(map(lambda x: x.lower(), info["br"])))
+    ind = np.where(br_lower == br_name.lower())[0][0]  # getting index from np.array
     Ies = info["br_val"][ind][0]
     Ics = info["br_val"][ind][1]
     beta = info["br_val"][ind][2]
@@ -257,7 +258,7 @@ def solve_nl_circuit_in_time(info, t):
     Returns:
         sol: np.array of size 2b+(n-1), solution for all circuit variables (e, v, i).
     """
-    return nr_method(info, t=t)
+    return nr_method(info, 1e-5, t)
 
 
 def nr_method(info, precision=1e-5, t=-1):

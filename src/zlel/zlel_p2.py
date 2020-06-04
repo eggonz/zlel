@@ -14,14 +14,14 @@ import numpy as np
 import sys
 import matplotlib.pyplot as plt
 
-if __name__ == "__main__":
-    import zlel_p1 as zl1
-    import zlel_p3 as zl3
-    import zlel_p4 as zl4
-else:
+if __name__ == "zlel.zlel_p2":
     import zlel.zlel_p1 as zl1
     import zlel.zlel_p3 as zl3
     import zlel.zlel_p4 as zl4
+else:
+    import zlel_p1 as zl1
+    import zlel_p3 as zl3
+    import zlel_p4 as zl4
 
 
 def print_solution2(sol, b, n):
@@ -292,11 +292,11 @@ def command_tr(info, values):
         sol_csv = ','.join(['%.9f' % num for num in sol_csv])
         print(sol_csv, file=file)
 
+        t += step
         while t < end:
             if dynamic:
                 zl4.update_state(info, sol)
 
-            t += step
             sol = solve_circuit_in_time(info, t)
             
             # write in csv
@@ -304,6 +304,7 @@ def command_tr(info, values):
             # sol to csv
             sol_csv = ','.join(['%.9f' % num for num in sol_csv])
             print(sol_csv, file=file)
+            t += step
 
 
 def process_circuit(filename):
@@ -512,7 +513,7 @@ def run_commands(info):
         info: dict containing all circuit data.
     """
     for ind in range(len(info["com_el"])):
-        com = info["com_el"][ind][1:]
+        com = info["com_el"][ind][1:].lower()
         if com == "pr":
             command_pr(info)
         elif com == "op":
