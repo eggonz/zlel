@@ -14,9 +14,14 @@ import numpy as np
 import sys
 import matplotlib.pyplot as plt
 
-import zlel_p1 as zl1
-import zlel_p3 as zl3
-import zlel_p4 as zl4
+if __name__ == "__main__":
+    import zlel_p1 as zl1
+    import zlel_p3 as zl3
+    import zlel_p4 as zl4
+else:
+    import zlel.zlel_p1 as zl1
+    import zlel.zlel_p3 as zl3
+    import zlel.zlel_p4 as zl4
 
 
 def print_solution2(sol, b, n):
@@ -202,8 +207,6 @@ def solve_circuit_in_time(info, t):
     a = get_reduced_incidence_matrix(info)
     m, n, u = get_element_matrices(info, t)
     tableau_t, tableau_u = build_tableau_system(a, m, n, u)
-    print(u)
-    print(np.linalg.det(tableau_t))
     if np.linalg.det(tableau_t) == 0:
         sys.exit("Error solving Tableau equations, check if det(T) != 0.")
 

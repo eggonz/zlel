@@ -16,7 +16,10 @@ import time
 import numpy as np
 import sys
 
-import zlel_p2 as zl2
+if __name__ == "__main__":
+    import zlel_p2 as zl2
+else:
+    import zlel.zlel_p2 as zl2
 
 d_parameters = dict()
 q_parameters = dict()

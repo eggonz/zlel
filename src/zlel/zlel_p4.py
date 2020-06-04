@@ -12,7 +12,11 @@
 """
 import time
 import sys
-import zlel_p2 as zl2
+
+if __name__ == "__main__":
+    import zlel_p2 as zl2
+else:
+    import zlel.zlel_p2 as zl2
 
 v_aurreko = {}
 i_aurreko = {}
