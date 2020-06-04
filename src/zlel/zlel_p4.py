@@ -24,6 +24,15 @@ tau = None
 
 
 def update_state(info, sol):
+    """ This function updates relevant values of the previous solution to 
+    execute the Euler method.
+
+        Args:
+            sol: np array with the solution of the Tableau equations
+            (e_1,..,e_n-1,v_1,..,v_b,i_1,..i_b)
+            info: dict containing all circuit info
+
+    """
     n = len(info["nd"])
     for ind in range(len(info["br"])):
         elem = info["br"][ind].lower()
@@ -34,6 +43,13 @@ def update_state(info, sol):
 
 
 def initialize(info, step):
+    """ This function initializes relevant values of to execute Euler method.
+
+        Args:
+            step: time step for the discrretization
+            info: dict containing all circuit info
+    
+    """
     global tau
     tau = step
     br = info["br"]
@@ -47,6 +63,15 @@ def initialize(info, step):
 
 
 def is_dynamic(info):
+    """ This function checks whether the circuit is dynamic or not.
+
+        Args:
+            info: dict containing all circuit info
+            
+        Returns:
+            bool: True if circuit has capacitors or inductors.
+    
+    """
     for br in info["br"]:
         if br.lower().startswith("c") or br.lower().startswith("l"):
             return True
