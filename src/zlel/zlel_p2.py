@@ -481,6 +481,20 @@ def get_element_matrices(info, t):
             n[ind, ind] = 1
             u[ind] = zl4.i_aurreko[branch]
 
+        elif branch.startswith("t"):
+            # write an equation with each branch
+            ind_in = np.flatnonzero(br_lower == branch[:-2] + "in")[0]  # index of the control branch in br
+            ind_ou = np.flatnonzero(br_lower == branch[:-2] + "ou")[0]  # index of the control branch in br
+
+            if branch.endswith("_in"):
+                # ind==ind_in
+                m[ind, ind_in] = 1
+                m[ind, ind_ou] = -br_val[ind, 0]
+            elif branch.endswith("_ou"):
+                # ind==ind_ou
+                n[ind, ind_in] = br_val[ind, 0]
+                n[ind, ind_ou] = 1
+
         elif branch.startswith("j"):
             # write an equation with each branch
             ind_in = np.flatnonzero(br_lower == branch[:-2] + "in")[0]  # index of the control branch in br
