@@ -74,6 +74,11 @@ def element_branches(element, nodes):
         nd = np.array([nodes[0:2], nodes[2:4]], dtype=int)
         number_of_branches = 2
 
+    elif elem_type == "j":
+        br = np.array([element + "_in", element + "_ou"], dtype=str)
+        nd = np.array([nodes[0:2], nodes[2:4]], dtype=int)
+        number_of_branches = 2
+
     else:
         br = np.array([element], dtype=str)
         nd = np.array([nodes[0:2]], dtype=int)
