@@ -1,0 +1,35 @@
+3 Elements
+3 Different nodes: [0 1 2]
+
+4 Branches: 
+	1. branch:	B1,	i1,	v1=e1-e0
+	2. branch:	T1_in,	i2,	v2=e1-e0
+	3. branch:	T1_ou,	i3,	v3=e2-e0
+	4. branch:	R1,	i4,	v4=e2-e0
+
+10 variables: 
+e1, e2, i1, i2, i3, i4, v1, v2, v3, v4
+
+Incidence Matrix: 
+[[-1 -1 -1 -1]
+ [ 1  1  0  0]
+ [ 0  0  1  1]]
+
+========== Nodes voltage to reference ========
+e1 =  [ 5.]
+e2 =  [ 10.]
+
+========== Branches voltage difference ========
+v1 =  [ 5.]
+v2 =  [ 5.]
+v3 =  [ 10.]
+v4 =  [ 10.]
+
+=============== Branches currents ==============
+i1 =  [-0.02]
+i2 =  [ 0.02]
+i3 =  [-0.01]
+i4 =  [ 0.01]
+
+================= End solution =================
+
